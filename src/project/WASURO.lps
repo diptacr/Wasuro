@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <PathDelim Value="\"/>
+    <Version Value="12"/>
+    <BuildModes Active="Default"/>
+    <Units>
+      <Unit>
+        <Filename Value="WASURO.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
+        <CursorPos X="79" Y="32"/>
+        <UsageCount Value="110"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\vm\vm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="25" Y="27"/>
+        <UsageCount Value="110"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\vm\vmtypes.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="17" Y="10"/>
+        <UsageCount Value="110"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\vm\vmopcodes.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="31" Y="16"/>
+        <UsageCount Value="110"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\vm\wasm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="18" Y="7"/>
+        <UsageCount Value="110"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\vm\wasm.parser.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="31" Y="20"/>
+        <UsageCount Value="110"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\vm\wasm.test.binary.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="15" Y="10"/>
+        <UsageCount Value="110"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\vm\wasm.leb128.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="55" Y="24"/>
+        <UsageCount Value="110"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\emu\console.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="70"/>
+        <UsageCount Value="1"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\vm\wasm.vm.pas"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="6" Y="31"/>
+        <UsageCount Value="1"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\vm\wasm.vm.opcodes.pas"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="1"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\vm\wasm.vm.types.pas"/>
+        <UnitName Value="wasm.types"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="11"/>
+        <UsageCount Value="1"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\vm\wasm.types.pas"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="25" Y="19"/>
+        <UsageCount Value="1"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\emu\types.pas"/>
+        <EditorIndex Value="5"/>
+        <CursorPos X="16" Y="41"/>
+        <UsageCount Value="51"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="C:\lazarus\fpc\3.2.2\source\rtl\inc\systemh.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="472"/>
+        <CursorPos X="3" Y="501"/>
+        <UsageCount Value="1"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\vm\wasm.parser.handletype.pas"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="54" Y="28"/>
+        <UsageCount Value="1"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\wasm\parser\wasm.parser.sections.pas"/>
+        <EditorIndex Value="8"/>
+        <CursorPos X="26" Y="10"/>
+        <UsageCount Value="54"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.dataSection.pas"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="1"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\wasm\parser\wasm.parser.pas"/>
+        <EditorIndex Value="6"/>
+        <TopLine Value="7"/>
+        <CursorPos X="18" Y="13"/>
+        <UsageCount Value="54"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.typeSection.pas"/>
+        <EditorIndex Value="13"/>
+        <TopLine Value="59"/>
+        <CursorPos X="16" Y="67"/>
+        <UsageCount Value="54"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\wasm\types\wasm.types.pas"/>
+        <EditorIndex Value="12"/>
+        <TopLine Value="278"/>
+        <CursorPos X="32" Y="296"/>
+        <UsageCount Value="54"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.functionSection.pas"/>
+        <EditorIndex Value="9"/>
+        <TopLine Value="13"/>
+        <CursorPos X="42" Y="61"/>
+        <UsageCount Value="54"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\emu\leb128.pas"/>
+        <EditorIndex Value="11"/>
+        <TopLine Value="7"/>
+        <CursorPos X="22" Y="51"/>
+        <UsageCount Value="54"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\wasm\types\wasm.types.heap.pas"/>
+        <EditorIndex Value="4"/>
+        <CursorPos X="44" Y="35"/>
+        <UsageCount Value="51"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\emu\lmemorymanager.pas"/>
+        <EditorIndex Value="7"/>
+        <UsageCount Value="51"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\wasm\types\wasm.types.stack.pas"/>
+        <EditorIndex Value="3"/>
+        <CursorPos X="173" Y="10"/>
+        <UsageCount Value="49"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.exportSection.pas"/>
+        <EditorIndex Value="10"/>
+        <CursorPos X="39" Y="21"/>
+        <UsageCount Value="45"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.codeSection.pas"/>
+        <EditorIndex Value="14"/>
+        <CursorPos X="49" Y="50"/>
+        <UsageCount Value="24"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\wasm\vm\wasm.vm.pas"/>
+        <EditorIndex Value="1"/>
+        <CursorPos X="40" Y="39"/>
+        <UsageCount Value="23"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="..\wasm\vm\wasm.vm.opcodes.pas"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="169"/>
+        <CursorPos X="47" Y="253"/>
+        <UsageCount Value="23"/>
+        <Loaded Value="True"/>
+      </Unit>
+    </Units>
+    <JumpHistory HistoryIndex="29">
+      <Position>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.typeSection.pas"/>
+        <Caret Line="23" Column="34" TopLine="2"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.typeSection.pas"/>
+        <Caret Line="31" Column="40"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\types\wasm.types.pas"/>
+        <Caret Line="221" Column="7" TopLine="192"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.typeSection.pas"/>
+        <Caret Line="67" Column="16" TopLine="59"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.codeSection.pas"/>
+        <Caret Line="17" Column="33"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\types\wasm.types.pas"/>
+        <Caret Line="172" Column="36" TopLine="165"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.codeSection.pas"/>
+        <Caret Line="54" Column="73" TopLine="26"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.codeSection.pas"/>
+        <Caret Line="55" Column="89" TopLine="27"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.codeSection.pas"/>
+        <Caret Line="60" Column="46" TopLine="32"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.codeSection.pas"/>
+        <Caret Line="65" Column="59" TopLine="37"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.codeSection.pas"/>
+        <Caret Line="79" Column="48" TopLine="51"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.codeSection.pas"/>
+        <Caret Line="86" Column="44" TopLine="60"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.codeSection.pas"/>
+        <Caret Line="88" Column="59" TopLine="60"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\parser\sections\wasm.parser.sections.codeSection.pas"/>
+        <Caret Line="104" Column="100" TopLine="48"/>
+      </Position>
+      <Position>
+        <Filename Value="WASURO.lpr"/>
+        <Caret Line="10" Column="30"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\vm\wasm.vm.pas"/>
+        <Caret Line="15" Column="23"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\vm\wasm.vm.pas"/>
+        <Caret Line="33" Column="15"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\vm\wasm.vm.pas"/>
+        <Caret Line="39" Column="71"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\types\wasm.types.pas"/>
+        <Caret Line="307" Column="5" TopLine="278"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\vm\wasm.vm.opcodes.pas"/>
+        <Caret Line="9" Column="11" TopLine="9"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\vm\wasm.vm.opcodes.pas"/>
+        <Caret Line="66" Column="47" TopLine="37"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\vm\wasm.vm.opcodes.pas"/>
+        <Caret Line="251" Column="138" TopLine="229"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\vm\wasm.vm.opcodes.pas"/>
+        <Caret Line="253" Column="85" TopLine="224"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\vm\wasm.vm.opcodes.pas"/>
+        <Caret Line="239" Column="37" TopLine="210"/>
+      </Position>
+      <Position>
+        <Filename Value="..\wasm\vm\wasm.vm.opcodes.pas"/>
+        <Caret Line="253" Column="47" TopLine="224"/>
+      </Position>
+      <Position>
+        <Filename Value="WASURO.lpr"/>
+        <Caret Line="29" Column="50"/>
+      </Position>
+      <Position>
+        <Filename Value="WASURO.lpr"/>
+        <Caret Line="30" Column="21"/>
+      </Position>
+      <Position>
+        <Filename Value="WASURO.lpr"/>
+        <Caret Line="31" Column="79"/>
+      </Position>
+      <Position>
+        <Filename Value="WASURO.lpr"/>
+        <Caret Line="33" Column="28"/>
+      </Position>
+      <Position>
+        <Filename Value="WASURO.lpr"/>
+        <Caret Line="32" Column="81"/>
+      </Position>
+    </JumpHistory>
+    <RunParams>
+      <FormatVersion Value="2"/>
+      <Modes ActiveMode=""/>
+    </RunParams>
+  </ProjectSession>
+</CONFIG>
