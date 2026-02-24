@@ -275,11 +275,38 @@ type
     end;
     PWASMCodeSection = ^TWASMCodeSection;
 
+    TWASMGlobalEntry = record
+      ValueType : TWasmValueType;
+      Mutable   : boolean;
+      Value     : TWASMValueEntry;
+    end;
+    PWASMGlobalEntry = ^TWASMGlobalEntry;
+
+    TWASMGlobals = record
+      GlobalCount : uint32;
+      Globals     : PWASMGlobalEntry;
+    end;
+    PWASMGlobals = ^TWASMGlobals;
+
+    TWASMMemoryLimits = record
+      HasMax   : boolean;
+      InitialPages : uint32;
+      MaxPages     : uint32;
+    end;
+    PWASMMemoryLimits = ^TWASMMemoryLimits;
+
+    TWASMMemorySection = record
+      MemoryCount : uint32;
+      Memories    : PWASMMemoryLimits;
+    end;
+    PWASMMemorySection = ^TWASMMemorySection;
+
     TWASMState = record
       Code   : puint8;
       Limit  : uint32;
       Locals : PWASMLocals;
       Memory : PWasmHeap;
+      Globals : PWASMGlobals;
       Control_Stack : PWASMStack;
       Operand_Stack : PWASMStack;
       IP : uint32;
@@ -292,6 +319,8 @@ type
       FunctionSection : PWASMFunctionSection;
       ExportSection   : PWASMExportSection;
       CodeSection     : PWASMCodeSection;
+      MemorySection   : PWASMMemorySection;
+      StartIndex      : int32;  { -1 = no start function }
     end;
 
     TWASMProcessContext = record
