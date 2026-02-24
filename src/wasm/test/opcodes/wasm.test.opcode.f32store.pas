@@ -29,6 +29,28 @@ begin
     f := TWASMPFloat(@readBack)^;
     assert_f32('stored 3.14', f, 3.14);
 
+    { Non-zero offset }
+    code[0] := $38;
+    code[1] := $00;
+    code[2] := $08; { offset = 8 }
+    ctx := make_test_context(@code[0], 3);
+    pushi32(ctx^.ExecutionState.Operand_Stack, 0);
+    pushf32(ctx^.ExecutionState.Operand_Stack, 2.5);
+    wasm.vm.tick(ctx);
+    wasm.types.heap.read_uint32(8, ctx^.ExecutionState.Memory, @readBack);
+    f := TWASMPFloat(@readBack)^;
+    assert_f32('store with offset=8', f, 2.5);
+
+    { OOB trap }
+    code[0] := $38;
+    code[1] := $00;
+    code[2] := $00;
+    ctx := make_test_context(@code[0], 3);
+    pushi32(ctx^.ExecutionState.Operand_Stack, TWASMInt32($10000));
+    pushf32(ctx^.ExecutionState.Operand_Stack, 1.0);
+    wasm.vm.tick(ctx);
+    assert_true('store OOB traps', ctx^.ExecutionState.Running = false);
+
     test_end;
 end;
 

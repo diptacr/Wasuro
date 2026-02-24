@@ -176,6 +176,21 @@ begin
     ctx^.ExecutionState.Globals^.GlobalCount := 0;
     ctx^.ExecutionState.Globals^.Globals := nil;
 
+    { Empty tables }
+    ctx^.ExecutionState.Tables := PWASMTables(kalloc(sizeof(TWASMTables)));
+    ctx^.ExecutionState.Tables^.TableCount := 0;
+    ctx^.ExecutionState.Tables^.Tables := nil;
+
+    { Empty data segments }
+    ctx^.ExecutionState.DataSegments := PWASMDataSegments(kalloc(sizeof(TWASMDataSegments)));
+    ctx^.ExecutionState.DataSegments^.SegmentCount := 0;
+    ctx^.ExecutionState.DataSegments^.Segments := nil;
+
+    { Empty element segments }
+    ctx^.ExecutionState.ElementSegments := PWASMElementSegments(kalloc(sizeof(TWASMElementSegments)));
+    ctx^.ExecutionState.ElementSegments^.SegmentCount := 0;
+    ctx^.ExecutionState.ElementSegments^.Segments := nil;
+
     { Empty locals }
     ctx^.ExecutionState.Locals := PWASMLocals(kalloc(sizeof(TWASMLocals)));
     ctx^.ExecutionState.Locals^.LocalCount := 0;

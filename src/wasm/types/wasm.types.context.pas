@@ -11,20 +11,24 @@ uses
 
 type
     TWASMState = record
-      Code   : TWASMPUInt8;
-      Limit  : TWASMUInt32;
-      Locals : PWASMLocals;
-      Memory : PWasmHeap;
-      Globals : PWASMGlobals;
-      Control_Stack : PWASMStack;
-      Operand_Stack : PWASMStack;
-      IP : TWASMUInt32;
-      Running : TWASMBoolean;
+      Code            : TWASMPUInt8;
+      Limit           : TWASMUInt32;
+      Locals          : PWASMLocals;
+      Memory          : PWasmHeap;
+      Globals         : PWASMGlobals;
+      Tables          : PWASMTables;
+      DataSegments    : PWASMDataSegments;
+      ElementSegments : PWASMElementSegments;
+      Control_Stack   : PWASMStack;
+      Operand_Stack   : PWASMStack;
+      IP              : TWASMUInt32;
+      Running         : TWASMBoolean;
     end;
     PWASMState = ^TWASMState;
 
     TWASMSections = record
       TypeSection     : PWASMTypeSection;
+      ImportSection   : PWASMImportSection;
       FunctionSection : PWASMFunctionSection;
       ExportSection   : PWASMExportSection;
       CodeSection     : PWASMCodeSection;
@@ -44,6 +48,9 @@ type
 
     TWASMOpcodeJumpTable = array[0..255] of FProcessWASMOpCode;
     PWASMOpcodeJumpTable = ^TWASMOpcodeJumpTable;
+
+    TWASMFCOpcodeJumpTable = array[0..255] of FProcessWASMOpCode;
+    PWASMFCOpcodeJumpTable = ^TWASMFCOpcodeJumpTable;
 
 implementation
 

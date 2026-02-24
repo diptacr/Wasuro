@@ -21,6 +21,11 @@ uses
     wasm.test.parser.memory,
     wasm.test.parser.start,
     wasm.test.parser.data,
+    wasm.test.parser.importsection,
+    wasm.test.parser.tablesection,
+    wasm.test.parser.elementsection,
+    { Validation tests }
+    wasm.test.parser.validate,
     { Const/control opcode tests }
     wasm.test.opcode.nop,
     wasm.test.opcode.unreachable,
@@ -41,6 +46,9 @@ uses
     wasm.test.opcode.brtable,
     wasm.test.opcode.call,
     wasm.test.opcode.callindirect,
+    { Table opcode tests }
+    wasm.test.opcode.tableget,
+    wasm.test.opcode.tableset,
     { Variable opcode tests }
     wasm.test.opcode.localget,
     wasm.test.opcode.localset,
@@ -125,6 +133,69 @@ uses
     wasm.test.opcode.f64gt,
     wasm.test.opcode.f64le,
     wasm.test.opcode.f64ge,
+    { F32 arithmetic tests }
+    wasm.test.opcode.f32abs,
+    wasm.test.opcode.f32neg,
+    wasm.test.opcode.f32ceil,
+    wasm.test.opcode.f32floor,
+    wasm.test.opcode.f32trunc,
+    wasm.test.opcode.f32nearest,
+    wasm.test.opcode.f32sqrt,
+    wasm.test.opcode.f32add,
+    wasm.test.opcode.f32sub,
+    wasm.test.opcode.f32mul,
+    wasm.test.opcode.f32div,
+    wasm.test.opcode.f32min,
+    wasm.test.opcode.f32max,
+    wasm.test.opcode.f32copysign,
+    { F64 arithmetic tests }
+    wasm.test.opcode.f64abs,
+    wasm.test.opcode.f64neg,
+    wasm.test.opcode.f64ceil,
+    wasm.test.opcode.f64floor,
+    wasm.test.opcode.f64trunc,
+    wasm.test.opcode.f64nearest,
+    wasm.test.opcode.f64sqrt,
+    wasm.test.opcode.f64add,
+    wasm.test.opcode.f64sub,
+    wasm.test.opcode.f64mul,
+    wasm.test.opcode.f64div,
+    wasm.test.opcode.f64min,
+    wasm.test.opcode.f64max,
+    wasm.test.opcode.f64copysign,
+    { Conversion/truncation tests }
+    wasm.test.opcode.i32wrapi64,
+    wasm.test.opcode.i32truncf32s,
+    wasm.test.opcode.i32truncf32u,
+    wasm.test.opcode.i32truncf64s,
+    wasm.test.opcode.i32truncf64u,
+    wasm.test.opcode.i64extendi32s,
+    wasm.test.opcode.i64extendi32u,
+    wasm.test.opcode.i64truncf32s,
+    wasm.test.opcode.i64truncf32u,
+    wasm.test.opcode.i64truncf64s,
+    wasm.test.opcode.i64truncf64u,
+    wasm.test.opcode.f32converti32s,
+    wasm.test.opcode.f32converti32u,
+    wasm.test.opcode.f32converti64s,
+    wasm.test.opcode.f32converti64u,
+    wasm.test.opcode.f32demotef64,
+    wasm.test.opcode.f64converti32s,
+    wasm.test.opcode.f64converti32u,
+    wasm.test.opcode.f64converti64s,
+    wasm.test.opcode.f64converti64u,
+    wasm.test.opcode.f64promotef32,
+    wasm.test.opcode.i32reinterpretf32,
+    wasm.test.opcode.i64reinterpretf64,
+    wasm.test.opcode.f32reinterpreti32,
+    wasm.test.opcode.f64reinterpreti64,
+    wasm.test.opcode.i32extend8s,
+    wasm.test.opcode.i32extend16s,
+    wasm.test.opcode.i64extend8s,
+    wasm.test.opcode.i64extend16s,
+    wasm.test.opcode.i64extend32s,
+    { Typed select test }
+    wasm.test.opcode.selecttyped,
     { Memory load tests }
     wasm.test.opcode.i32load,
     wasm.test.opcode.i64load,
@@ -153,6 +224,30 @@ uses
     { Memory size/grow tests }
     wasm.test.opcode.memorysize,
     wasm.test.opcode.memorygrow,
+    { Saturating truncation tests (0xFC $00-$07) }
+    wasm.test.opcode.i32truncsatf32s,
+    wasm.test.opcode.i32truncsatf32u,
+    wasm.test.opcode.i32truncsatf64s,
+    wasm.test.opcode.i32truncsatf64u,
+    wasm.test.opcode.i64truncsatf32s,
+    wasm.test.opcode.i64truncsatf32u,
+    wasm.test.opcode.i64truncsatf64s,
+    wasm.test.opcode.i64truncsatf64u,
+    { Bulk memory tests (0xFC $08-$0B) }
+    wasm.test.opcode.memoryinit,
+    wasm.test.opcode.datadrop,
+    wasm.test.opcode.memorycopy,
+    wasm.test.opcode.memoryfill,
+    { Table ops tests (0xFC $0C-$11) }
+    wasm.test.opcode.tableinit,
+    wasm.test.opcode.elemdrop,
+    wasm.test.opcode.tablecopy,
+    wasm.test.opcode.tablegrow,
+    wasm.test.opcode.tablesize,
+    wasm.test.opcode.tablefill,
+    { Parser tests }
+    wasm.test.parser.datacount,
+    wasm.test.parser.passivedata,
     { End-to-end binary tests }
     wasm.test.binary.return42,
     wasm.test.binary.addnums,
@@ -183,6 +278,12 @@ begin
     wasm.test.parser.memory.run;
     wasm.test.parser.start.run;
     wasm.test.parser.data.run;
+    wasm.test.parser.importsection.run;
+    wasm.test.parser.tablesection.run;
+    wasm.test.parser.elementsection.run;
+
+    { Validation }
+    wasm.test.parser.validate.run;
 
     { Const/control opcodes }
     wasm.test.opcode.nop.run;
@@ -204,6 +305,10 @@ begin
     wasm.test.opcode.brtable.run;
     wasm.test.opcode.call.run;
     wasm.test.opcode.callindirect.run;
+
+    { Table opcodes }
+    wasm.test.opcode.tableget.run;
+    wasm.test.opcode.tableset.run;
 
     { Variable opcodes }
     wasm.test.opcode.localget.run;
@@ -298,6 +403,73 @@ begin
     wasm.test.opcode.f64le.run;
     wasm.test.opcode.f64ge.run;
 
+    { F32 arithmetic }
+    wasm.test.opcode.f32abs.run;
+    wasm.test.opcode.f32neg.run;
+    wasm.test.opcode.f32ceil.run;
+    wasm.test.opcode.f32floor.run;
+    wasm.test.opcode.f32trunc.run;
+    wasm.test.opcode.f32nearest.run;
+    wasm.test.opcode.f32sqrt.run;
+    wasm.test.opcode.f32add.run;
+    wasm.test.opcode.f32sub.run;
+    wasm.test.opcode.f32mul.run;
+    wasm.test.opcode.f32div.run;
+    wasm.test.opcode.f32min.run;
+    wasm.test.opcode.f32max.run;
+    wasm.test.opcode.f32copysign.run;
+
+    { F64 arithmetic }
+    wasm.test.opcode.f64abs.run;
+    wasm.test.opcode.f64neg.run;
+    wasm.test.opcode.f64ceil.run;
+    wasm.test.opcode.f64floor.run;
+    wasm.test.opcode.f64trunc.run;
+    wasm.test.opcode.f64nearest.run;
+    wasm.test.opcode.f64sqrt.run;
+    wasm.test.opcode.f64add.run;
+    wasm.test.opcode.f64sub.run;
+    wasm.test.opcode.f64mul.run;
+    wasm.test.opcode.f64div.run;
+    wasm.test.opcode.f64min.run;
+    wasm.test.opcode.f64max.run;
+    wasm.test.opcode.f64copysign.run;
+
+    { Conversion/truncation }
+    wasm.test.opcode.i32wrapi64.run;
+    wasm.test.opcode.i32truncf32s.run;
+    wasm.test.opcode.i32truncf32u.run;
+    wasm.test.opcode.i32truncf64s.run;
+    wasm.test.opcode.i32truncf64u.run;
+    wasm.test.opcode.i64extendi32s.run;
+    wasm.test.opcode.i64extendi32u.run;
+    wasm.test.opcode.i64truncf32s.run;
+    wasm.test.opcode.i64truncf32u.run;
+    wasm.test.opcode.i64truncf64s.run;
+    wasm.test.opcode.i64truncf64u.run;
+    wasm.test.opcode.f32converti32s.run;
+    wasm.test.opcode.f32converti32u.run;
+    wasm.test.opcode.f32converti64s.run;
+    wasm.test.opcode.f32converti64u.run;
+    wasm.test.opcode.f32demotef64.run;
+    wasm.test.opcode.f64converti32s.run;
+    wasm.test.opcode.f64converti32u.run;
+    wasm.test.opcode.f64converti64s.run;
+    wasm.test.opcode.f64converti64u.run;
+    wasm.test.opcode.f64promotef32.run;
+    wasm.test.opcode.i32reinterpretf32.run;
+    wasm.test.opcode.i64reinterpretf64.run;
+    wasm.test.opcode.f32reinterpreti32.run;
+    wasm.test.opcode.f64reinterpreti64.run;
+    wasm.test.opcode.i32extend8s.run;
+    wasm.test.opcode.i32extend16s.run;
+    wasm.test.opcode.i64extend8s.run;
+    wasm.test.opcode.i64extend16s.run;
+    wasm.test.opcode.i64extend32s.run;
+
+    { Typed select }
+    wasm.test.opcode.selecttyped.run;
+
     { Memory loads }
     wasm.test.opcode.i32load.run;
     wasm.test.opcode.i64load.run;
@@ -328,6 +500,34 @@ begin
     { Memory size/grow }
     wasm.test.opcode.memorysize.run;
     wasm.test.opcode.memorygrow.run;
+
+    { Saturating truncation (0xFC $00-$07) }
+    wasm.test.opcode.i32truncsatf32s.run;
+    wasm.test.opcode.i32truncsatf32u.run;
+    wasm.test.opcode.i32truncsatf64s.run;
+    wasm.test.opcode.i32truncsatf64u.run;
+    wasm.test.opcode.i64truncsatf32s.run;
+    wasm.test.opcode.i64truncsatf32u.run;
+    wasm.test.opcode.i64truncsatf64s.run;
+    wasm.test.opcode.i64truncsatf64u.run;
+
+    { Bulk memory (0xFC $08-$0B) }
+    wasm.test.opcode.memoryinit.run;
+    wasm.test.opcode.datadrop.run;
+    wasm.test.opcode.memorycopy.run;
+    wasm.test.opcode.memoryfill.run;
+
+    { Table ops (0xFC $0C-$11) }
+    wasm.test.opcode.tableinit.run;
+    wasm.test.opcode.elemdrop.run;
+    wasm.test.opcode.tablecopy.run;
+    wasm.test.opcode.tablegrow.run;
+    wasm.test.opcode.tablesize.run;
+    wasm.test.opcode.tablefill.run;
+
+    { Parser tests }
+    wasm.test.parser.datacount.run;
+    wasm.test.parser.passivedata.run;
 
     { End-to-end binary tests }
     wasm.test.binary.return42.run;

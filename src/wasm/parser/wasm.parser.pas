@@ -36,6 +36,7 @@ begin
 
     // Initialize the sections
     ctx^.Sections.TypeSection:= nil;
+    ctx^.Sections.ImportSection:= nil;
     ctx^.Sections.FunctionSection:= nil;
     ctx^.Sections.ExportSection:= nil;
     ctx^.Sections.CodeSection:= nil;
@@ -46,6 +47,21 @@ begin
     ctx^.ExecutionState.Globals:= PWASMGlobals(kalloc(sizeof(TWASMGlobals)));
     ctx^.ExecutionState.Globals^.GlobalCount:= 0;
     ctx^.ExecutionState.Globals^.Globals:= nil;
+
+    // Initialize tables (empty until table section is parsed)
+    ctx^.ExecutionState.Tables:= PWASMTables(kalloc(sizeof(TWASMTables)));
+    ctx^.ExecutionState.Tables^.TableCount:= 0;
+    ctx^.ExecutionState.Tables^.Tables:= nil;
+
+    // Initialize data segments (empty until data section is parsed)
+    ctx^.ExecutionState.DataSegments:= PWASMDataSegments(kalloc(sizeof(TWASMDataSegments)));
+    ctx^.ExecutionState.DataSegments^.SegmentCount:= 0;
+    ctx^.ExecutionState.DataSegments^.Segments:= nil;
+
+    // Initialize element segments (empty until element section is parsed)
+    ctx^.ExecutionState.ElementSegments:= PWASMElementSegments(kalloc(sizeof(TWASMElementSegments)));
+    ctx^.ExecutionState.ElementSegments^.SegmentCount:= 0;
+    ctx^.ExecutionState.ElementSegments^.Segments:= nil;
 
     newContext:= ctx;
 end;

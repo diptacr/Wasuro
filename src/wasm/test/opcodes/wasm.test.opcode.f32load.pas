@@ -27,6 +27,26 @@ begin
     wasm.vm.tick(ctx);
     assert_f32('load 3.14', popf32(ctx^.ExecutionState.Operand_Stack), 3.14);
 
+    { Non-zero offset }
+    code[0] := $2A;
+    code[1] := $00;
+    code[2] := $0C; { offset = 12 }
+    ctx := make_test_context(@code[0], 3);
+    f := 1.5;
+    wasm.types.heap.write_uint32(12, ctx^.ExecutionState.Memory, TWASMPUInt32(@f)^);
+    pushi32(ctx^.ExecutionState.Operand_Stack, 0);
+    wasm.vm.tick(ctx);
+    assert_f32('load with offset=12', popf32(ctx^.ExecutionState.Operand_Stack), 1.5);
+
+    { OOB trap }
+    code[0] := $2A;
+    code[1] := $00;
+    code[2] := $00;
+    ctx := make_test_context(@code[0], 3);
+    pushi32(ctx^.ExecutionState.Operand_Stack, TWASMInt32($10000));
+    wasm.vm.tick(ctx);
+    assert_true('OOB traps', ctx^.ExecutionState.Running = false);
+
     test_end;
 end;
 

@@ -8,14 +8,21 @@ procedure _WASM_opcode_BlockOp(Context : PWASMProcessContext);
 
 implementation
 
-uses wasm.types.builtin, wasm.types.constants, wasm.vm.control;
+uses wasm.types.builtin, wasm.types.constants, wasm.vm.control, leb128;
 
 procedure _WASM_opcode_BlockOp(Context : PWASMProcessContext);
 var
     end_ip: TWASMUInt32;
+    dummy: TWASMUInt32;
+    bytesRead: TWASMUInt8;
 begin
     Inc(Context^.ExecutionState.IP); { past opcode $02 }
-    Inc(Context^.ExecutionState.IP); { past blocktype byte }
+    { Skip blocktype (s33 LEB128) }
+    bytesRead := read_leb128_to_uint32(
+        @Context^.ExecutionState.Code[Context^.ExecutionState.IP],
+        @Context^.ExecutionState.Code[Context^.ExecutionState.Limit],
+        @dummy);
+    Inc(Context^.ExecutionState.IP, bytesRead);
     { Find the matching end byte }
     end_ip := scan_forward(Context^.ExecutionState.Code,
                            Context^.ExecutionState.IP,

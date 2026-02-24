@@ -8,15 +8,22 @@ procedure _WASM_opcode_IfOp(Context : PWASMProcessContext);
 
 implementation
 
-uses wasm.types.builtin, wasm.types.stack, wasm.types.constants, wasm.vm.control;
+uses wasm.types.builtin, wasm.types.stack, wasm.types.constants, wasm.vm.control, leb128;
 
 procedure _WASM_opcode_IfOp(Context : PWASMProcessContext);
 var
     cond: TWASMInt32;
     end_ip, target_pos: TWASMUInt32;
+    dummy: TWASMUInt32;
+    bytesRead: TWASMUInt8;
 begin
     Inc(Context^.ExecutionState.IP); { past opcode $04 }
-    Inc(Context^.ExecutionState.IP); { past blocktype byte }
+    { Skip blocktype (s33 LEB128) }
+    bytesRead := read_leb128_to_uint32(
+        @Context^.ExecutionState.Code[Context^.ExecutionState.IP],
+        @Context^.ExecutionState.Code[Context^.ExecutionState.Limit],
+        @dummy);
+    Inc(Context^.ExecutionState.IP, bytesRead);
     cond := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
     if cond <> 0 then begin
         { Condition true: enter if-true body }

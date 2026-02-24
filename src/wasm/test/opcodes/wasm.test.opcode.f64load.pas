@@ -27,6 +27,26 @@ begin
     wasm.vm.tick(ctx);
     assert_f64('load 2.718281828', popf64(ctx^.ExecutionState.Operand_Stack), 2.718281828);
 
+    { Non-zero offset }
+    code[0] := $2B;
+    code[1] := $00;
+    code[2] := $10; { offset = 16 }
+    ctx := make_test_context(@code[0], 3);
+    d := 9.81;
+    wasm.types.heap.write_uint64(16, ctx^.ExecutionState.Memory, TWASMPUInt64(@d)^);
+    pushi32(ctx^.ExecutionState.Operand_Stack, 0);
+    wasm.vm.tick(ctx);
+    assert_f64('load with offset=16', popf64(ctx^.ExecutionState.Operand_Stack), 9.81);
+
+    { OOB trap }
+    code[0] := $2B;
+    code[1] := $00;
+    code[2] := $00;
+    ctx := make_test_context(@code[0], 3);
+    pushi32(ctx^.ExecutionState.Operand_Stack, TWASMInt32($10000));
+    wasm.vm.tick(ctx);
+    assert_true('OOB traps', ctx^.ExecutionState.Running = false);
+
     test_end;
 end;
 

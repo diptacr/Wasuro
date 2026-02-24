@@ -13,6 +13,7 @@ procedure run;
 var
     code : array[0..0] of TWASMUInt8;
     ctx : PWASMProcessContext;
+    nanBits : TWASMUInt64;
 begin
     test_begin('opcode.f64.le');
 
@@ -36,6 +37,15 @@ begin
     pushf64(ctx^.ExecutionState.Operand_Stack, 1.0);
     wasm.vm.tick(ctx);
     assert_i32('2.0<=1.0', popi32(ctx^.ExecutionState.Operand_Stack), 0);
+
+    { NaN<=1.0 must be 0 }
+    nanBits := $7FF8000000000000;
+    code[0] := $65;
+    ctx := make_test_context(@code[0], 1);
+    pushf64(ctx^.ExecutionState.Operand_Stack, TWASMPDouble(@nanBits)^);
+    pushf64(ctx^.ExecutionState.Operand_Stack, 1.0);
+    wasm.vm.tick(ctx);
+    assert_i32('NaN<=1.0 is 0', popi32(ctx^.ExecutionState.Operand_Stack), 0);
 
     test_end;
 end;
