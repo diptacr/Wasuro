@@ -3,29 +3,29 @@ unit wasm.test.framework;
 interface
 
 uses
-    types, lmemorymanager, console,
+    wasm.types.builtin, lmemorymanager, console,
     wasm.types, wasm.types.heap, wasm.types.stack;
 
 var
-    TotalTests  : uint32;
-    PassedTests : uint32;
-    FailedTests : uint32;
+    TotalTests  : TWASMUInt32;
+    PassedTests : TWASMUInt32;
+    FailedTests : TWASMUInt32;
 
 procedure reset_test_state;
-procedure test_begin(name : pchar);
-procedure assert_true(name : pchar; condition : boolean);
-procedure assert_i32(name : pchar; actual, expected : int32);
-procedure assert_i64(name : pchar; actual, expected : int64);
-procedure assert_f32(name : pchar; actual, expected : float);
-procedure assert_f64(name : pchar; actual, expected : double);
-procedure assert_u32(name : pchar; actual, expected : uint32);
-procedure assert_u64(name : pchar; actual, expected : uint64);
-procedure assert_bool(name : pchar; actual, expected : boolean);
-function  test_end : boolean;
+procedure test_begin(name : TWASMPChar);
+procedure assert_true(name : TWASMPChar; condition : TWASMBoolean);
+procedure assert_i32(name : TWASMPChar; actual, expected : TWASMInt32);
+procedure assert_i64(name : TWASMPChar; actual, expected : TWASMInt64);
+procedure assert_f32(name : TWASMPChar; actual, expected : TWASMFloat);
+procedure assert_f64(name : TWASMPChar; actual, expected : TWASMDouble);
+procedure assert_u32(name : TWASMPChar; actual, expected : TWASMUInt32);
+procedure assert_u64(name : TWASMPChar; actual, expected : TWASMUInt64);
+procedure assert_bool(name : TWASMPChar; actual, expected : TWASMBoolean);
+function  test_end : TWASMBoolean;
 
-function  make_test_context(code : puint8; codeLen : uint32) : PWASMProcessContext;
-procedure setup_test_locals(ctx : PWASMProcessContext; count : uint32; valType : TWasmValueType);
-procedure setup_test_globals(ctx : PWASMProcessContext; count : uint32; valType : TWasmValueType; mutable : boolean);
+function  make_test_context(code : TWASMPUInt8; codeLen : TWASMUInt32) : PWASMProcessContext;
+procedure setup_test_locals(ctx : PWASMProcessContext; count : TWASMUInt32; valType : TWasmValueType);
+procedure setup_test_globals(ctx : PWASMProcessContext; count : TWASMUInt32; valType : TWasmValueType; mutable : TWASMBoolean);
 
 implementation
 
@@ -36,13 +36,13 @@ begin
     FailedTests := 0;
 end;
 
-procedure test_begin(name : pchar);
+procedure test_begin(name : TWASMPChar);
 begin
     writestring('[TEST] ');
     writestringln(name);
 end;
 
-procedure pass(name : pchar);
+procedure pass(name : TWASMPChar);
 begin
     Inc(TotalTests);
     Inc(PassedTests);
@@ -50,7 +50,7 @@ begin
     writestringln(name);
 end;
 
-procedure fail(name : pchar);
+procedure fail(name : TWASMPChar);
 begin
     Inc(TotalTests);
     Inc(FailedTests);
@@ -58,7 +58,7 @@ begin
     writestringln(name);
 end;
 
-procedure assert_true(name : pchar; condition : boolean);
+procedure assert_true(name : TWASMPChar; condition : TWASMBoolean);
 begin
     if condition then
         pass(name)
@@ -66,7 +66,7 @@ begin
         fail(name);
 end;
 
-procedure assert_i32(name : pchar; actual, expected : int32);
+procedure assert_i32(name : TWASMPChar; actual, expected : TWASMInt32);
 begin
     if actual = expected then
         pass(name)
@@ -79,7 +79,7 @@ begin
     end;
 end;
 
-procedure assert_i64(name : pchar; actual, expected : int64);
+procedure assert_i64(name : TWASMPChar; actual, expected : TWASMInt64);
 begin
     if actual = expected then
         pass(name)
@@ -92,7 +92,7 @@ begin
     end;
 end;
 
-procedure assert_f32(name : pchar; actual, expected : float);
+procedure assert_f32(name : TWASMPChar; actual, expected : TWASMFloat);
 begin
     if actual = expected then
         pass(name)
@@ -101,7 +101,7 @@ begin
     end;
 end;
 
-procedure assert_f64(name : pchar; actual, expected : double);
+procedure assert_f64(name : TWASMPChar; actual, expected : TWASMDouble);
 begin
     if actual = expected then
         pass(name)
@@ -110,20 +110,7 @@ begin
     end;
 end;
 
-procedure assert_u32(name : pchar; actual, expected : uint32);
-begin
-    if actual = expected then
-        pass(name)
-    else begin
-        fail(name);
-        writestring('    expected: ');
-        writeintWND(expected, 0);
-        writestring(' got: ');
-        writeintlnWND(actual, 0);
-    end;
-end;
-
-procedure assert_u64(name : pchar; actual, expected : uint64);
+procedure assert_u32(name : TWASMPChar; actual, expected : TWASMUInt32);
 begin
     if actual = expected then
         pass(name)
@@ -136,7 +123,20 @@ begin
     end;
 end;
 
-procedure assert_bool(name : pchar; actual, expected : boolean);
+procedure assert_u64(name : TWASMPChar; actual, expected : TWASMUInt64);
+begin
+    if actual = expected then
+        pass(name)
+    else begin
+        fail(name);
+        writestring('    expected: ');
+        writeintWND(expected, 0);
+        writestring(' got: ');
+        writeintlnWND(actual, 0);
+    end;
+end;
+
+procedure assert_bool(name : TWASMPChar; actual, expected : TWASMBoolean);
 begin
     if actual = expected then
         pass(name)
@@ -149,12 +149,12 @@ begin
     end;
 end;
 
-function test_end : boolean;
+function test_end : TWASMBoolean;
 begin
     test_end := (FailedTests = 0);
 end;
 
-function make_test_context(code : puint8; codeLen : uint32) : PWASMProcessContext;
+function make_test_context(code : TWASMPUInt8; codeLen : TWASMUInt32) : PWASMProcessContext;
 var
     ctx : PWASMProcessContext;
 begin
@@ -193,9 +193,9 @@ begin
     make_test_context := ctx;
 end;
 
-procedure setup_test_locals(ctx : PWASMProcessContext; count : uint32; valType : TWasmValueType);
+procedure setup_test_locals(ctx : PWASMProcessContext; count : TWASMUInt32; valType : TWasmValueType);
 var
-    i : uint32;
+    i : TWASMUInt32;
 begin
     ctx^.ExecutionState.Locals^.LocalCount := count;
     ctx^.ExecutionState.Locals^.TypeCount := count;
@@ -206,9 +206,9 @@ begin
     end;
 end;
 
-procedure setup_test_globals(ctx : PWASMProcessContext; count : uint32; valType : TWasmValueType; mutable : boolean);
+procedure setup_test_globals(ctx : PWASMProcessContext; count : TWASMUInt32; valType : TWasmValueType; mutable : TWASMBoolean);
 var
-    i : uint32;
+    i : TWASMUInt32;
 begin
     ctx^.ExecutionState.Globals^.GlobalCount := count;
     ctx^.ExecutionState.Globals^.Globals := PWASMGlobalEntry(kalloc(sizeof(TWASMGlobalEntry) * count));

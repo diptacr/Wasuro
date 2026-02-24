@@ -3,16 +3,16 @@ unit wasm.parser.sections.memorySection;
 interface
 
 uses
-    types, lmemorymanager, console, leb128,
+    wasm.types.builtin, lmemorymanager, console, leb128,
     wasm.types, wasm.types.heap;
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 
 implementation
 
 procedure walk(ctx : PWASMProcessContext);
 var
-   i : uint32;
+   i : TWASMUInt32;
    mem : PWASMMemoryLimits;
 begin
     for i := 0 to ctx^.Sections.MemorySection^.MemoryCount - 1 do begin
@@ -29,21 +29,21 @@ begin
     end;
 end;
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 var
-   pos, bend : puint8;
-   bytesRead : uint8;
-   memCount : uint32;
-   i : uint32;
+   pos, bend : TWASMPUInt8;
+   bytesRead : TWASMUInt8;
+   memCount : TWASMUInt32;
+   i : TWASMUInt32;
    mem : PWASMMemoryLimits;
-   flags : uint32;
+   flags : TWASMUInt32;
 
 begin
     writestring('[wasm.parser] Handle Section: Memory - Size: ');
     writeintlnWND(section_length, 0);
 
     pos := buffer;
-    bend := puint8(buffer + section_length);
+    bend := TWASMPUInt8(buffer + section_length);
 
     { Read memory count }
     bytesRead := read_leb128_to_uint32(pos, bend, @memCount);

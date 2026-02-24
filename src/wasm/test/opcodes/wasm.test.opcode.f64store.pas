@@ -7,14 +7,14 @@ procedure run;
 implementation
 
 uses
-    types, wasm.types, wasm.types.heap, wasm.types.stack, wasm.vm, wasm.test.framework;
+    wasm.types.builtin, wasm.types, wasm.types.heap, wasm.types.stack, wasm.vm, wasm.test.framework;
 
 procedure run;
 var
-    code : array[0..2] of uint8;
+    code : array[0..2] of TWASMUInt8;
     ctx : PWASMProcessContext;
-    readBack : uint64;
-    d : double;
+    readBack : TWASMUInt64;
+    d : TWASMDouble;
 begin
     test_begin('opcode.f64.store');
 
@@ -26,7 +26,7 @@ begin
     pushf64(ctx^.ExecutionState.Operand_Stack, 2.718281828); { value }
     wasm.vm.tick(ctx);
     wasm.types.heap.read_uint64(0, ctx^.ExecutionState.Memory, @readBack);
-    d := pdouble(@readBack)^;
+    d := TWASMPDouble(@readBack)^;
     assert_f64('stored 2.718281828', d, 2.718281828);
 
     test_end;

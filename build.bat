@@ -13,6 +13,10 @@ if "%1"=="test" set TESTFLAGS=-dRUN_TESTS
 if not exist "%BIN%" mkdir "%BIN%"
 if not exist "%LIB%" mkdir "%LIB%"
 
+REM ── Lint ────────────────────────────────────────────────────────────
+powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%lint.ps1" -SrcRoot "%SRC%"
+if %ERRORLEVEL% NEQ 0 exit /b 1
+
 "%FPC%" ^
   %TESTFLAGS% ^
   -FE"%BIN%" ^

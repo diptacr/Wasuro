@@ -7,13 +7,13 @@ procedure run;
 implementation
 
 uses
-    types, wasm.types, wasm.types.heap, wasm.types.stack, wasm.vm, wasm.test.framework;
+    wasm.types.builtin, wasm.types, wasm.types.heap, wasm.types.stack, wasm.vm, wasm.test.framework;
 
 procedure run;
 var
-    code : array[0..2] of uint8;
+    code : array[0..2] of TWASMUInt8;
     ctx : PWASMProcessContext;
-    d : double;
+    d : TWASMDouble;
 begin
     test_begin('opcode.f64.load');
 
@@ -22,7 +22,7 @@ begin
     code[2] := $00; { offset }
     ctx := make_test_context(@code[0], 3);
     d := 2.718281828;
-    wasm.types.heap.write_uint64(0, ctx^.ExecutionState.Memory, puint64(@d)^);
+    wasm.types.heap.write_uint64(0, ctx^.ExecutionState.Memory, TWASMPUInt64(@d)^);
     pushi32(ctx^.ExecutionState.Operand_Stack, 0); { base address }
     wasm.vm.tick(ctx);
     assert_f64('load 2.718281828', popf64(ctx^.ExecutionState.Operand_Stack), 2.718281828);

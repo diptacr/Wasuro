@@ -3,11 +3,11 @@ unit wasm.parser;
 interface
 
 uses
-    types, lmemorymanager, console, leb128,
+    wasm.types.builtin, lmemorymanager, console, leb128,
     wasm.types, wasm.types.heap, wasm.types.stack,
     wasm.parser.sections;
 
-function parse(buffer: puint8; buffer_end: puint8) : PWASMProcessContext;
+function parse(buffer: TWASMPUInt8; buffer_end: TWASMPUInt8) : PWASMProcessContext;
 
 implementation
 
@@ -50,13 +50,13 @@ begin
     newContext:= ctx;
 end;
 
-function parse(buffer: puint8; buffer_end: puint8): PWASMProcessContext;
+function parse(buffer: TWASMPUInt8; buffer_end: TWASMPUInt8): PWASMProcessContext;
 var
    ctx : PWASMProcessContext;
-   pos : puint8;
-   bytesRead : uint8;
-   section_id : uint8;
-   section_length : uint32;
+   pos : TWASMPUInt8;
+   bytesRead : TWASMUInt8;
+   section_id : TWASMUInt8;
+   section_length : TWASMUInt32;
 
 begin
     // Allocate the context
@@ -66,7 +66,7 @@ begin
     writestringln('[wasm.parser] Parsing WASM Binary');
 
     // Check for the WASM Magic
-    if(puint32(pos)^ = wasm.types.WASM_HDR_MAGIC) then begin
+    if(TWASMPUInt32(pos)^ = wasm.types.WASM_HDR_MAGIC) then begin
         writestringln('[wasm.parser] Binary is valid.');
 
         // Set binary to valid
@@ -74,7 +74,7 @@ begin
         inc(pos, 4);
 
         // Read the version
-        ctx^.Version:= puint32(pos)^;
+        ctx^.Version:= TWASMPUInt32(pos)^;
         inc(pos, 4);
         writestring('[wasm.parser] Version: ');
         writeintlnWND(ctx^.Version, 0);

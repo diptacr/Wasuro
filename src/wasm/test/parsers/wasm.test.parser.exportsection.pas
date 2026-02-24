@@ -7,13 +7,13 @@ procedure run;
 implementation
 
 uses
-    types, lmemorymanager,
+    wasm.types.builtin, lmemorymanager,
     wasm.types, wasm.test.framework,
     wasm.parser.sections.exportSection;
 
 procedure run;
 var
-    buf : array[0..7] of uint8;
+    buf : array[0..7] of TWASMUInt8;
     ctx : PWASMProcessContext;
 begin
     test_begin('parser.export');

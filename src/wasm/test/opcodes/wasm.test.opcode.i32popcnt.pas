@@ -7,11 +7,11 @@ procedure run;
 implementation
 
 uses
-    types, wasm.types, wasm.types.stack, wasm.vm, wasm.test.framework;
+    wasm.types.builtin, wasm.types, wasm.types.stack, wasm.vm, wasm.test.framework;
 
 procedure run;
 var
-    code : array[0..0] of uint8;
+    code : array[0..0] of TWASMUInt8;
     ctx : PWASMProcessContext;
 begin
     test_begin('opcode.i32.popcnt');
@@ -40,7 +40,7 @@ begin
     { Test: popcnt($55555555) = 16 }
     code[0] := $69;
     ctx := make_test_context(@code[0], 1);
-    pushi32(ctx^.ExecutionState.Operand_Stack, int32($55555555));
+    pushi32(ctx^.ExecutionState.Operand_Stack, TWASMInt32($55555555));
     wasm.vm.tick(ctx);
     assert_i32('popcnt($55555555)=16', popi32(ctx^.ExecutionState.Operand_Stack), 16);
 

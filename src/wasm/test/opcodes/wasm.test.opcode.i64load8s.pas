@@ -7,11 +7,11 @@ procedure run;
 implementation
 
 uses
-    types, wasm.types, wasm.types.heap, wasm.types.stack, wasm.vm, wasm.test.framework;
+    wasm.types.builtin, wasm.types, wasm.types.heap, wasm.types.stack, wasm.vm, wasm.test.framework;
 
 procedure run;
 var
-    code : array[0..2] of uint8;
+    code : array[0..2] of TWASMUInt8;
     ctx : PWASMProcessContext;
 begin
     test_begin('opcode.i64.load8_s');

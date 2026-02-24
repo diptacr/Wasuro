@@ -7,18 +7,18 @@ procedure run;
 implementation
 
 uses
-    types, lmemorymanager,
+    wasm.types.builtin, lmemorymanager,
     wasm.types, wasm.test.framework,
     wasm.parser.sections.functionSection;
 
 procedure run;
 var
-    buf : array[0..3] of uint8;
+    buf : array[0..3] of TWASMUInt8;
     ctx : PWASMProcessContext;
 begin
     test_begin('parser.function');
 
-    { Build binary: 3 functions referencing types 0, 1, 0
+    { Build binary: 3 functions referencing wasm.types.builtin 0, 1, 0
       Buffer: [$03, $00, $01, $00] }
     buf[0] := $03; { function_count = 3 }
     buf[1] := $00; { type_index = 0 }

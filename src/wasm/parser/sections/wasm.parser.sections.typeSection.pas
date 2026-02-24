@@ -3,10 +3,10 @@ unit wasm.parser.sections.typeSection;
 interface
 
 uses
-    types, lmemorymanager, console, leb128,
+    wasm.types.builtin, lmemorymanager, console, leb128,
     wasm.types;
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 
 implementation
 
@@ -14,10 +14,10 @@ procedure walk(ctx : PWASMProcessContext);
 var
    currentType : PWASMType;
    currentParam : PWASMParam;
-   i,j : uint32;
+   i,j : TWASMUInt32;
 
 begin
-     // Walk the types
+     // Walk the wasm.types.builtin
      for i:=1 to ctx^.Sections.TypeSection^.TypeCount do begin
           currentType:= @ctx^.Sections.TypeSection^.Types[i - 1];
           writestring('[wasm.parser]     Index: ');
@@ -50,13 +50,13 @@ begin
      end;
 end;
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 var
-   pos : puint8;
-   bytesRead : uint8;
+   pos : TWASMPUInt8;
+   bytesRead : TWASMUInt8;
    currentType : PWASMType;
    currentParam : PWASMParam;
-   i, parsedTypes : uint32;
+   i, parsedTypes : TWASMUInt32;
 
 begin
      writestring('[wasm.parser] Handle Section: Type - Size: ');
@@ -67,31 +67,31 @@ begin
      ctx^.Sections.TypeSection:= PWASMTypeSection(kalloc(sizeof(TWASMTypeSection)));
      ctx^.Sections.TypeSection^.TypeCount:= 0;
 
-     // Read the number of function types
-     bytesRead:= read_leb128_to_uint32(buffer, puint8(buffer + section_length), @ctx^.Sections.TypeSection^.TypeCount);
+     // Read the number of function wasm.types.builtin
+     bytesRead:= read_leb128_to_uint32(buffer, TWASMPUInt8(buffer + section_length), @ctx^.Sections.TypeSection^.TypeCount);
      inc(pos, bytesRead);
 
-     // Read the function types
+     // Read the function wasm.types.builtin
      if(ctx^.Sections.TypeSection^.TypeCount > 0) then begin
           // Allocate the first type
           ctx^.Sections.TypeSection^.Types:= PWASMType(kalloc(sizeof(TWASMType) * ctx^.Sections.TypeSection^.TypeCount));
 
-          // Read the function types
+          // Read the function wasm.types.builtin
           for parsedTypes:=1 to ctx^.Sections.TypeSection^.TypeCount do begin
                currentType:= @ctx^.Sections.TypeSection^.Types[parsedTypes - 1];
 
                // Check if we are at the end of the buffer
-               if pos >= puint8(buffer + section_length) then Exit;
+               if pos >= TWASMPUInt8(buffer + section_length) then Exit;
 
                // Read the function type
                currentType^._type:= pos^;
                inc(pos);
 
                // Read the number of parameters
-               bytesRead:= read_leb128_to_uint32(pos, puint8(buffer + section_length), @currentType^.ParamCount);
+               bytesRead:= read_leb128_to_uint32(pos, TWASMPUInt8(buffer + section_length), @currentType^.ParamCount);
                inc(pos, bytesRead);
 
-               // Read the parameter types
+               // Read the parameter wasm.types.builtin
                if(currentType^.ParamCount > 0) then begin
                     currentType^.ParamTypes:= PWASMParam(kalloc(sizeof(TWASMParam) * currentType^.ParamCount));
                     for i:=1 to currentType^.ParamCount do begin
@@ -102,10 +102,10 @@ begin
                end;
 
                // Read the number of return values
-               bytesRead:= read_leb128_to_uint32(pos, puint8(buffer + section_length), @currentType^.ReturnCount);
+               bytesRead:= read_leb128_to_uint32(pos, TWASMPUInt8(buffer + section_length), @currentType^.ReturnCount);
                inc(pos, bytesRead);
 
-               // Read the return types
+               // Read the return wasm.types.builtin
                if(currentType^.ReturnCount > 0) then begin
                     currentType^.ReturnTypes:= PWASMParam(kalloc(sizeof(TWASMParam) * currentType^.ReturnCount));
                     for i:=1 to currentType^.ReturnCount do begin
@@ -117,7 +117,7 @@ begin
           end;
      end;
 
-     // Walk the types
+     // Walk the wasm.types.builtin
      walk(ctx);
 end;
 

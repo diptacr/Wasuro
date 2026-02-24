@@ -3,44 +3,44 @@ unit wasm.types.heap;
 interface
 
 uses
-    types, lmemorymanager, leb128;
+    wasm.types.builtin, lmemorymanager, leb128;
 
 const
     PAGE_SIZE = $10000; // 64k
 
 type
-    PWasmPage = puint8;
+    PWasmPage = TWASMPUInt8;
 
     PWasmPages = ^PWasmPage;
 
     PWasmHeap = ^TWasmHeap;
     TWasmHeap = record
         Memory    : PWasmPages;
-        PageCount : uint32;
+        PageCount : TWASMUInt32;
     end;
 
 function new_heap() : PWasmHeap;
-function expand_heap(Heap : PWasmHeap) : boolean;
+function expand_heap(Heap : PWasmHeap) : TWASMBoolean;
 
-function read_uint8(location : uint32; heap : PWasmHeap; ret : puint8) : boolean;
-function read_uint16(location : uint32; heap : PWasmHeap; ret : puint16) : boolean;
-function read_uint32(location : uint32; heap : PWasmHeap; ret : puint32) : boolean;
-function read_uint64(location : uint32; heap : PWasmHeap; ret : puint64) : boolean;
-function read_leb_uint32(location : uint32; heap : PWasmHeap; ret : puint32) : boolean;
+function read_uint8(location : TWASMUInt32; heap : PWasmHeap; ret : TWASMPUInt8) : TWASMBoolean;
+function read_uint16(location : TWASMUInt32; heap : PWasmHeap; ret : TWASMPUInt16) : TWASMBoolean;
+function read_uint32(location : TWASMUInt32; heap : PWasmHeap; ret : TWASMPUInt32) : TWASMBoolean;
+function read_uint64(location : TWASMUInt32; heap : PWasmHeap; ret : TWASMPUInt64) : TWASMBoolean;
+function read_leb_uint32(location : TWASMUInt32; heap : PWasmHeap; ret : TWASMPUInt32) : TWASMBoolean;
 
-function write_uint8(location : uint32; heap : PWasmHeap; value : uint8) : boolean;
-function write_uint16(location : uint32; heap : PWasmHeap; value : uint16) : boolean;
-function write_uint32(location : uint32; heap : PWasmHeap; value : uint32) : boolean;
-function write_uint64(location : uint32; heap : PWasmHeap; value : uint64) : boolean;
+function write_uint8(location : TWASMUInt32; heap : PWasmHeap; value : TWASMUInt8) : TWASMBoolean;
+function write_uint16(location : TWASMUInt32; heap : PWasmHeap; value : TWASMUInt16) : TWASMBoolean;
+function write_uint32(location : TWASMUInt32; heap : PWasmHeap; value : TWASMUInt32) : TWASMBoolean;
+function write_uint64(location : TWASMUInt32; heap : PWasmHeap; value : TWASMUInt64) : TWASMBoolean;
 
 implementation
 
-function get_page_index(location : uint32) : uint32;
+function get_page_index(location : TWASMUInt32) : TWASMUInt32;
 begin
     get_page_index:= location div PAGE_SIZE;
 end;
 
-function get_page_offset(location : uint32) : uint32;
+function get_page_offset(location : TWASMUInt32) : TWASMUInt32;
 begin
     get_page_offset:= location mod PAGE_SIZE;
 end;
@@ -57,10 +57,10 @@ begin
      new_heap:= Heap;
 end;
 
-function expand_heap(Heap : PWasmHeap) : boolean;
+function expand_heap(Heap : PWasmHeap) : TWASMBoolean;
 var
     NewMemory : PWasmPages;
-    i : uint32;
+    i : TWASMUInt32;
 
 begin
     NewMemory:= PWasmPages(Kalloc(sizeof(PWasmPage) * (Heap^.PageCount + 1)));
@@ -68,13 +68,13 @@ begin
         NewMemory[i]:= Heap^.Memory[i];
     end;
     NewMemory[Heap^.PageCount]:= PWasmPage(Kalloc(PAGE_SIZE));
-    kfree(void(Heap^.Memory));
+    kfree(TWASMVoid(Heap^.Memory));
     Heap^.Memory:= NewMemory;
     inc(Heap^.PageCount);
     expand_heap:= true;
 end;
 
-function address_voids_bounds(location : uint32; length : uint32; heap : PWasmHeap) : boolean;
+function address_voids_bounds(location : TWASMUInt32; length : TWASMUInt32; heap : PWasmHeap) : TWASMBoolean;
 begin
     if (location >= heap^.PageCount * PAGE_SIZE) or ((location + (length - 1)) >= heap^.PageCount * PAGE_SIZE) then begin
         address_voids_bounds:= true;
@@ -83,7 +83,7 @@ begin
     end;
 end;
 
-function address_crosses_bounds(location : uint32; length : uint32) : boolean;
+function address_crosses_bounds(location : TWASMUInt32; length : TWASMUInt32) : TWASMBoolean;
 begin
     if get_page_index(location) <> get_page_index(location + (length - 1)) then begin
         address_crosses_bounds:= true;
@@ -92,17 +92,17 @@ begin
     end;
 end;
 
-function safe_read_across_bounds(location : uint32; length : uint32; heap : PWasmHeap) : PWasmPage;
+function safe_read_across_bounds(location : TWASMUInt32; length : TWASMUInt32; heap : PWasmHeap) : PWasmPage;
 var
-    Page1Offset : uint32;
-    Page1Page : uint32;
-    Page1BytesToRead : uint32;
+    Page1Offset : TWASMUInt32;
+    Page1Page : TWASMUInt32;
+    Page1BytesToRead : TWASMUInt32;
 
-    Page2Page : uint32;
-    Page2BytesToRead : uint32;
+    Page2Page : TWASMUInt32;
+    Page2BytesToRead : TWASMUInt32;
 
     res : PWasmPage;
-    i : uint32;
+    i : TWASMUInt32;
 
 begin
       res:= PWasmPage(kalloc(length));
@@ -124,16 +124,16 @@ begin
       safe_read_across_bounds:= res;
 end;
 
-function safe_write_across_bounds(location : uint32; length : uint32; heap : PWasmHeap; value : PWasmPage) : boolean;
+function safe_write_across_bounds(location : TWASMUInt32; length : TWASMUInt32; heap : PWasmHeap; value : PWasmPage) : TWASMBoolean;
 var
-    Page1Offset : uint32;
-    Page1Page : uint32;
-    Page1BytesToWrite : uint32;
+    Page1Offset : TWASMUInt32;
+    Page1Page : TWASMUInt32;
+    Page1BytesToWrite : TWASMUInt32;
 
-    Page2Page : uint32;
-    Page2BytesToWrite : uint32;
+    Page2Page : TWASMUInt32;
+    Page2BytesToWrite : TWASMUInt32;
 
-    i : uint32;
+    i : TWASMUInt32;
 
 begin
     Page1Offset:= get_page_offset(location);
@@ -154,13 +154,13 @@ begin
 end;
 
 
-function read_uint8(location : uint32; heap : PWasmHeap; ret : puint8) : boolean;
+function read_uint8(location : TWASMUInt32; heap : PWasmHeap; ret : TWASMPUInt8) : TWASMBoolean;
 var
-    PageIndex : uint32;
-    PageOffset : uint32;
+    PageIndex : TWASMUInt32;
+    PageOffset : TWASMUInt32;
 
 begin
-    if address_voids_bounds(location, sizeof(uint8), heap) then begin
+    if address_voids_bounds(location, sizeof(TWASMUInt8), heap) then begin
         read_uint8:= false;
     end else begin
         PageIndex:= get_page_index(location);
@@ -170,84 +170,84 @@ begin
     end;
 end;
 
-function read_uint16(location : uint32; heap : PWasmHeap; ret : puint16) : boolean;
+function read_uint16(location : TWASMUInt32; heap : PWasmHeap; ret : TWASMPUInt16) : TWASMBoolean;
 var
-    PageIndex : uint32;
-    PageOffset : uint32;
-    Pos : PuInt16;
+    PageIndex : TWASMUInt32;
+    PageOffset : TWASMUInt32;
+    Pos : TWASMPUInt16;
 
 begin
-    if address_voids_bounds(location, sizeof(uint16), heap) then begin
+    if address_voids_bounds(location, sizeof(TWASMUInt16), heap) then begin
         read_uint16:= false;
     end else begin
-        if address_crosses_bounds(location, sizeof(uint16)) then begin
-            Pos:= puint16(safe_read_across_bounds(location, sizeof(uint16), heap));
+        if address_crosses_bounds(location, sizeof(TWASMUInt16)) then begin
+            Pos:= TWASMPUInt16(safe_read_across_bounds(location, sizeof(TWASMUInt16), heap));
             ret^:= Pos^;
-            kfree(void(Pos));
+            kfree(TWASMVoid(Pos));
         end else begin
             pageIndex:= get_page_index(location);
             pageOffset:= get_page_offset(location);
-            Pos:= puint16(heap^.Memory[PageIndex] + PageOffset);
+            Pos:= TWASMPUInt16(heap^.Memory[PageIndex] + PageOffset);
             ret^:= Pos^;
         end;
         read_uint16:= true;
     end;
 end;
 
-function read_uint32(location : uint32; heap : PWasmHeap; ret : puint32) : boolean;
+function read_uint32(location : TWASMUInt32; heap : PWasmHeap; ret : TWASMPUInt32) : TWASMBoolean;
 var
-    PageIndex : uint32;
-    PageOffset : uint32;
-    Pos : PuInt32;
+    PageIndex : TWASMUInt32;
+    PageOffset : TWASMUInt32;
+    Pos : TWASMPUInt32;
 
 begin
-    if address_voids_bounds(location, sizeof(uint32), heap) then begin
+    if address_voids_bounds(location, sizeof(TWASMUInt32), heap) then begin
         read_uint32:= false;
     end else begin
-        if address_crosses_bounds(location, sizeof(uint32)) then begin
-            Pos:= puint32(safe_read_across_bounds(location, sizeof(uint32), heap));
+        if address_crosses_bounds(location, sizeof(TWASMUInt32)) then begin
+            Pos:= TWASMPUInt32(safe_read_across_bounds(location, sizeof(TWASMUInt32), heap));
             ret^:= Pos^;
-            kfree(void(Pos));
+            kfree(TWASMVoid(Pos));
         end else begin
             pageIndex:= get_page_index(location);
             pageOffset:= get_page_offset(location);
-            Pos:= puint32(heap^.Memory[PageIndex] + pageOffset);
+            Pos:= TWASMPUInt32(heap^.Memory[PageIndex] + pageOffset);
             ret^:= Pos^;
         end;
         read_uint32:= true;
     end;
 end;
 
-function read_uint64(location : uint32; heap : PWasmHeap; ret : puint64) : boolean;
+function read_uint64(location : TWASMUInt32; heap : PWasmHeap; ret : TWASMPUInt64) : TWASMBoolean;
 var
-    PageIndex : uint32;
-    PageOffset : uint32;
-    Pos : PuInt64;
+    PageIndex : TWASMUInt32;
+    PageOffset : TWASMUInt32;
+    Pos : TWASMPUInt64;
 
 begin
-    if address_voids_bounds(location, sizeof(uint64), heap) then begin
+    if address_voids_bounds(location, sizeof(TWASMUInt64), heap) then begin
         read_uint64:= false;
     end else begin
-        if address_crosses_bounds(location, sizeof(uint64)) then begin
-            Pos:= puint64(safe_read_across_bounds(location, sizeof(uint64), heap));
+        if address_crosses_bounds(location, sizeof(TWASMUInt64)) then begin
+            Pos:= TWASMPUInt64(safe_read_across_bounds(location, sizeof(TWASMUInt64), heap));
             ret^:= Pos^;
-            kfree(void(Pos));
+            kfree(TWASMVoid(Pos));
         end else begin
             pageIndex:= get_page_index(location);
             pageOffset:= get_page_offset(location);
-            Pos:= puint64(heap^.Memory[PageIndex] + PageOffset);
+            Pos:= TWASMPUInt64(heap^.Memory[PageIndex] + PageOffset);
             ret^:= Pos^;
         end;
         read_uint64:= true;
     end; 
 end;
 
-function read_leb_uint32(location : uint32; heap : PWasmHeap; ret : puint32) : boolean;
+function read_leb_uint32(location : TWASMUInt32; heap : PWasmHeap; ret : TWASMPUInt32) : TWASMBoolean;
 var
-    PageIndex : uint32;
-    PageOffset : uint32;
-    Pos : PuInt8;
-    bytesRead : uint8;
+    PageIndex : TWASMUInt32;
+    PageOffset : TWASMUInt32;
+    Pos : TWASMPUInt8;
+    bytesRead : TWASMUInt8;
 
 begin
     if address_voids_bounds(location, 5, heap) then begin
@@ -255,13 +255,13 @@ begin
     end else begin
       if address_crosses_bounds(location, 5) then begin
         Pos:= safe_read_across_bounds(location, 5, heap);
-        bytesRead:= read_leb128_to_uint32(pos, puint8(pos+5), ret);
-        kfree(void(Pos));
+        bytesRead:= read_leb128_to_uint32(pos, TWASMPUInt8(pos+5), ret);
+        kfree(TWASMVoid(Pos));
       end else begin
         pageIndex:= get_page_index(location);
         pageOffset:= get_page_offset(location);
-        Pos:= puint8(heap^.Memory[PageIndex] + PageOffset);
-        bytesRead:= read_leb128_to_uint32(pos, puint8(pos+5), ret);
+        Pos:= TWASMPUInt8(heap^.Memory[PageIndex] + PageOffset);
+        bytesRead:= read_leb128_to_uint32(pos, TWASMPUInt8(pos+5), ret);
       end;
       if bytesRead > 0 then
           read_leb_uint32:= true
@@ -270,11 +270,11 @@ begin
     end;
 end;
 
-function write_uint8(location : uint32; heap : PWasmHeap; value : uint8) : boolean;
+function write_uint8(location : TWASMUInt32; heap : PWasmHeap; value : TWASMUInt8) : TWASMBoolean;
 var
-    PageIndex : uint32;
-    PageOffset : uint32;
-    Pos : PuInt8;
+    PageIndex : TWASMUInt32;
+    PageOffset : TWASMUInt32;
+    Pos : TWASMPUInt8;
 
 begin
     if address_voids_bounds(location, 1, heap) then begin
@@ -282,26 +282,26 @@ begin
     end else begin
         PageIndex:= get_page_index(location);
         pageOffset:= get_page_offset(location);
-        Pos:= puint8(heap^.Memory[PageIndex] + PageOffset);
+        Pos:= TWASMPUInt8(heap^.Memory[PageIndex] + PageOffset);
         Pos^:= value;
         write_uint8:= true;    
     end;
 end;
 
-function write_uint16(location : uint32; heap : PWasmHeap; value : uint16) : boolean;
+function write_uint16(location : TWASMUInt32; heap : PWasmHeap; value : TWASMUInt16) : TWASMBoolean;
 var
-    PageIndex : uint32;
-    PageOffset : uint32;
-    Pos : PuInt16;
+    PageIndex : TWASMUInt32;
+    PageOffset : TWASMUInt32;
+    Pos : TWASMPUInt16;
 
 begin
-    if address_voids_bounds(location, SizeOf(uint16), heap) then begin
+    if address_voids_bounds(location, SizeOf(TWASMUInt16), heap) then begin
         write_uint16:= false;
     end else begin
-        if address_crosses_bounds(location, SizeOf(uint16)) then begin
-            Pos:= puint16(kalloc(sizeof(uint16)));
+        if address_crosses_bounds(location, SizeOf(TWASMUInt16)) then begin
+            Pos:= TWASMPUInt16(kalloc(sizeof(TWASMUInt16)));
             Pos^:= value;
-            if(safe_write_across_bounds(location, sizeof(uint16), heap, PWasmPage(Pos))) then begin
+            if(safe_write_across_bounds(location, sizeof(TWASMUInt16), heap, PWasmPage(Pos))) then begin
               write_uint16:= true;
             end else begin
               write_uint16:= false;
@@ -309,27 +309,27 @@ begin
         end else begin
             pageIndex:= get_page_index(location);
             pageOffset:= get_page_offset(location);
-            Pos:= puint16(heap^.Memory[PageIndex] + PageOffset);
+            Pos:= TWASMPUInt16(heap^.Memory[PageIndex] + PageOffset);
             Pos^:= value;
             write_uint16:= true;
         end;
     end;
 end;
 
-function write_uint32(location : uint32; heap : PWasmHeap; value : uint32) : boolean;
+function write_uint32(location : TWASMUInt32; heap : PWasmHeap; value : TWASMUInt32) : TWASMBoolean;
 var
-    PageIndex : uint32;
-    PageOffset : uint32;
-    Pos : PuInt32;
+    PageIndex : TWASMUInt32;
+    PageOffset : TWASMUInt32;
+    Pos : TWASMPUInt32;
 
 begin
-    if address_voids_bounds(location, SizeOf(uint32), heap) then begin
+    if address_voids_bounds(location, SizeOf(TWASMUInt32), heap) then begin
         write_uint32:= false;
     end else begin
-        if address_crosses_bounds(location, SizeOf(uint32)) then begin
-            Pos:= puint32(kalloc(sizeof(uint32)));
+        if address_crosses_bounds(location, SizeOf(TWASMUInt32)) then begin
+            Pos:= TWASMPUInt32(kalloc(sizeof(TWASMUInt32)));
             Pos^:= value;
-            if(safe_write_across_bounds(location, sizeof(uint32), heap, PWasmPage(Pos))) then begin
+            if(safe_write_across_bounds(location, sizeof(TWASMUInt32), heap, PWasmPage(Pos))) then begin
               write_uint32:= true;
             end else begin
               write_uint32:= false;
@@ -337,27 +337,27 @@ begin
         end else begin
             pageIndex:= get_page_index(location);
             pageOffset:= get_page_offset(location);
-            Pos:= puint32(heap^.Memory[PageIndex] + PageOffset);
+            Pos:= TWASMPUInt32(heap^.Memory[PageIndex] + PageOffset);
             Pos^:= value;
             write_uint32:= true;
         end;
     end;
 end;
 
-function write_uint64(location : uint32; heap : PWasmHeap; value : uint64) : boolean;
+function write_uint64(location : TWASMUInt32; heap : PWasmHeap; value : TWASMUInt64) : TWASMBoolean;
 var
-    PageIndex : uint32;
-    PageOffset : uint32;
-    Pos : PuInt64;
+    PageIndex : TWASMUInt32;
+    PageOffset : TWASMUInt32;
+    Pos : TWASMPUInt64;
 
 begin
-    if address_voids_bounds(location, SizeOf(uint64), heap) then begin
+    if address_voids_bounds(location, SizeOf(TWASMUInt64), heap) then begin
         write_uint64:= false;
     end else begin
-        if address_crosses_bounds(location, SizeOf(uint64)) then begin
-            Pos:= puint64(kalloc(sizeof(uint64)));
+        if address_crosses_bounds(location, SizeOf(TWASMUInt64)) then begin
+            Pos:= TWASMPUInt64(kalloc(sizeof(TWASMUInt64)));
             Pos^:= value;
-            if(safe_write_across_bounds(location, sizeof(uint64), heap, PWasmPage(Pos))) then begin
+            if(safe_write_across_bounds(location, sizeof(TWASMUInt64), heap, PWasmPage(Pos))) then begin
               write_uint64:= true;
             end else begin
               write_uint64:= false;
@@ -365,7 +365,7 @@ begin
         end else begin
             pageIndex:= get_page_index(location);
             pageOffset:= get_page_offset(location);
-            Pos:= puint64(heap^.Memory[PageIndex] + PageOffset);
+            Pos:= TWASMPUInt64(heap^.Memory[PageIndex] + PageOffset);
             Pos^:= value;
             write_uint64:= true;
         end;

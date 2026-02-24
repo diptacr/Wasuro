@@ -7,15 +7,15 @@ procedure run;
 implementation
 
 uses
-    types, lmemorymanager,
+    wasm.types.builtin, lmemorymanager,
     wasm.types, wasm.types.heap, wasm.test.framework,
     wasm.parser.sections.dataSection;
 
 procedure run;
 var
-    buf : array[0..9] of uint8;
+    buf : array[0..9] of TWASMUInt8;
     ctx : PWASMProcessContext;
-    val : uint8;
+    val : TWASMUInt8;
 begin
     test_begin('parser.data');
 
@@ -42,16 +42,16 @@ begin
 
     { Verify memory at offset 16 has the expected bytes }
     read_uint8(16, ctx^.ExecutionState.Memory, @val);
-    assert_u32('byte 0 = $DE', uint32(val), $DE);
+    assert_u32('byte 0 = $DE', TWASMUInt32(val), $DE);
 
     read_uint8(17, ctx^.ExecutionState.Memory, @val);
-    assert_u32('byte 1 = $AD', uint32(val), $AD);
+    assert_u32('byte 1 = $AD', TWASMUInt32(val), $AD);
 
     read_uint8(18, ctx^.ExecutionState.Memory, @val);
-    assert_u32('byte 2 = $BE', uint32(val), $BE);
+    assert_u32('byte 2 = $BE', TWASMUInt32(val), $BE);
 
     read_uint8(19, ctx^.ExecutionState.Memory, @val);
-    assert_u32('byte 3 = $EF', uint32(val), $EF);
+    assert_u32('byte 3 = $EF', TWASMUInt32(val), $EF);
 
     test_end;
 end;

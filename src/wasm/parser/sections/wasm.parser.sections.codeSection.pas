@@ -3,16 +3,16 @@ unit wasm.parser.sections.codeSection;
 interface
 
 uses
-    types, lmemorymanager, console, leb128,
+    wasm.types.builtin, lmemorymanager, console, leb128,
     wasm.types;
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 
 implementation
 
 procedure printCtxCode(ctx : PWASMProcessContext);
 var
-    i : uint32;
+    i : TWASMUInt32;
 
 begin
     writestring('[wasm.parser]     Flat Code: ');
@@ -25,15 +25,15 @@ end;
 
 procedure walk(ctx : PWASMProcessContext);
 var
-   localpos, pos, bend : puint8;
-   bytesRead : uint8;
+   localpos, pos, bend : TWASMPUInt8;
+   bytesRead : TWASMUInt8;
    currentEntry : PWASMCodeEntry;
-   i,j,l : uint32;
-   localCount,localTemp,localIndex : uint32;
+   i,j,l : TWASMUInt32;
+   localCount,localTemp,localIndex : TWASMUInt32;
    localType: TWasmValueType;
-   codeLength: uint32;
-   codeOffset: uint32;
-   totalSize: uint32;
+   codeLength: TWASMUInt32;
+   codeOffset: TWASMUInt32;
+   totalSize: TWASMUInt32;
 begin
     // Walk the code entries
     for i:=1 to ctx^.Sections.CodeSection^.CodeCount do begin
@@ -59,17 +59,17 @@ begin
 end;
 
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 var
-   localpos, pos, bend : puint8;
-   bytesRead : uint8;
+   localpos, pos, bend : TWASMPUInt8;
+   bytesRead : TWASMUInt8;
    currentEntry : PWASMCodeEntry;
-   i,j,l : uint32;
-   localCount,localTemp,localIndex : uint32;
+   i,j,l : TWASMUInt32;
+   localCount,localTemp,localIndex : TWASMUInt32;
    localType: TWasmValueType;
-   codeLength: uint32;
-   codeOffset: uint32;
-   totalSize: uint32;
+   codeLength: TWASMUInt32;
+   codeOffset: TWASMUInt32;
+   totalSize: TWASMUInt32;
 
 begin
     writestring('[wasm.parser] Handle Section: Code - Size: ');
@@ -77,7 +77,7 @@ begin
 
     // Initialize the read/end pointers
     pos:= buffer;
-    bend:= puint8(pos + section_length);
+    bend:= TWASMPUInt8(pos + section_length);
 
     // Initialize the code section
     ctx^.Sections.CodeSection:= PWASMCodeSection(kalloc(sizeof(TWASMCodeSection)));
@@ -158,7 +158,7 @@ begin
             end;
 
             // Read the code
-            currentEntry^.Code:= puint8(kalloc(currentEntry^.CodeLength));
+            currentEntry^.Code:= TWASMPUInt8(kalloc(currentEntry^.CodeLength));
             for j:=1 to currentEntry^.CodeLength do begin
                 currentEntry^.Code[j - 1]:= pos^;
                 inc(pos);
@@ -171,12 +171,12 @@ begin
             totalSize:= totalSize + currentEntry^.CodeLength;
         end;
 
-        ctx^.ExecutionState.Code:= puint8(kalloc(totalSize));
+        ctx^.ExecutionState.Code:= TWASMPUInt8(kalloc(totalSize));
         ctx^.ExecutionState.Limit:= totalSize;
         localpos:= ctx^.ExecutionState.Code;
         for i:=1 to ctx^.Sections.CodeSection^.CodeCount do begin
             currentEntry:= @ctx^.Sections.CodeSection^.Entries[i - 1];
-            currentEntry^.CodeIndex:= uint32(localpos - ctx^.ExecutionState.Code);
+            currentEntry^.CodeIndex:= TWASMUInt32(localpos - ctx^.ExecutionState.Code);
             for j:=1 to currentEntry^.CodeLength do begin
                 localpos^:= currentEntry^.Code[j - 1];
                 inc(localpos);

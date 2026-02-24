@@ -7,11 +7,11 @@ procedure run;
 implementation
 
 uses
-    types, wasm.types, wasm.types.stack, wasm.vm, wasm.test.framework;
+    wasm.types.builtin, wasm.types, wasm.types.stack, wasm.vm, wasm.test.framework;
 
 procedure run;
 var
-    code : array[0..0] of uint8;
+    code : array[0..0] of TWASMUInt8;
     ctx : PWASMProcessContext;
 begin
     test_begin('opcode.i32.rotr');
@@ -22,7 +22,7 @@ begin
     pushi32(ctx^.ExecutionState.Operand_Stack, 1);
     pushi32(ctx^.ExecutionState.Operand_Stack, 1);
     wasm.vm.tick(ctx);
-    assert_i32('1 rotr 1=$80000000', popi32(ctx^.ExecutionState.Operand_Stack), int32($80000000));
+    assert_i32('1 rotr 1=$80000000', popi32(ctx^.ExecutionState.Operand_Stack), TWASMInt32($80000000));
 
     { Test: 2 rotr 1 = 1 }
     code[0] := $78;
@@ -35,10 +35,10 @@ begin
     { Test: $FF rotr 8 = $FF000000 }
     code[0] := $78;
     ctx := make_test_context(@code[0], 1);
-    pushi32(ctx^.ExecutionState.Operand_Stack, int32($FF));
+    pushi32(ctx^.ExecutionState.Operand_Stack, TWASMInt32($FF));
     pushi32(ctx^.ExecutionState.Operand_Stack, 8);
     wasm.vm.tick(ctx);
-    assert_i32('$FF rotr 8=$FF000000', popi32(ctx^.ExecutionState.Operand_Stack), int32($FF000000));
+    assert_i32('$FF rotr 8=$FF000000', popi32(ctx^.ExecutionState.Operand_Stack), TWASMInt32($FF000000));
 
     test_end;
 end;

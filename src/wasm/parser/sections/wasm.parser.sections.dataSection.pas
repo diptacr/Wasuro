@@ -3,31 +3,31 @@ unit wasm.parser.sections.dataSection;
 interface
 
 uses
-    types, lmemorymanager, console, leb128,
+    wasm.types.builtin, lmemorymanager, console, leb128,
     wasm.types, wasm.types.heap;
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 
 implementation
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 var
-   pos, bend : puint8;
-   bytesRead : uint8;
-   segCount : uint32;
-   i, j : uint32;
-   memIdx : uint32;
-   offset : uint32;
-   dataSize : uint32;
-   opcode : uint8;
-   tmpU32 : uint32;
+   pos, bend : TWASMPUInt8;
+   bytesRead : TWASMUInt8;
+   segCount : TWASMUInt32;
+   i, j : TWASMUInt32;
+   memIdx : TWASMUInt32;
+   offset : TWASMUInt32;
+   dataSize : TWASMUInt32;
+   opcode : TWASMUInt8;
+   tmpU32 : TWASMUInt32;
 
 begin
     writestring('[wasm.parser] Handle Section: Data - Size: ');
     writeintlnWND(section_length, 0);
 
     pos := buffer;
-    bend := puint8(buffer + section_length);
+    bend := TWASMPUInt8(buffer + section_length);
 
     { Read segment count }
     bytesRead := read_leb128_to_uint32(pos, bend, @segCount);

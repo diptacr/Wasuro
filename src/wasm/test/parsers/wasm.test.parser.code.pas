@@ -7,13 +7,13 @@ procedure run;
 implementation
 
 uses
-    types, lmemorymanager,
+    wasm.types.builtin, lmemorymanager,
     wasm.types, wasm.test.framework,
     wasm.parser.sections.codeSection;
 
 procedure run;
 var
-    buf : array[0..4] of uint8;
+    buf : array[0..4] of TWASMUInt8;
     ctx : PWASMProcessContext;
 begin
     test_begin('parser.code');
@@ -37,8 +37,8 @@ begin
     assert_u32('Entries[0].Locals.LocalCount=0', ctx^.Sections.CodeSection^.Entries[0].Locals.LocalCount, 0);
 
     { Verify code bytes }
-    assert_u32('code[0]=nop', uint32(ctx^.Sections.CodeSection^.Entries[0].Code[0]), $01);
-    assert_u32('code[1]=end', uint32(ctx^.Sections.CodeSection^.Entries[0].Code[1]), $0B);
+    assert_u32('code[0]=nop', TWASMUInt32(ctx^.Sections.CodeSection^.Entries[0].Code[0]), $01);
+    assert_u32('code[1]=end', TWASMUInt32(ctx^.Sections.CodeSection^.Entries[0].Code[1]), $0B);
 
     test_end;
 end;

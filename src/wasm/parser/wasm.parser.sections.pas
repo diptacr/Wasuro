@@ -3,7 +3,7 @@ unit wasm.parser.sections;
 interface
 
 uses
-    types,
+    wasm.types.builtin,
     wasm.types,
     wasm.parser.sections.customSection,
     wasm.parser.sections.typeSection,
@@ -18,11 +18,11 @@ uses
     wasm.parser.sections.codeSection,
     wasm.parser.sections.dataSection;
 
-procedure handle(sectionId : uint8; buffer : puint8; section_length : uint32; ctx : PWASMProcessContext);
+procedure handle(sectionId : TWASMUInt8; buffer : TWASMPUInt8; section_length : TWASMUInt32; ctx : PWASMProcessContext);
 
 implementation
 
-procedure handle(sectionId : uint8; buffer : puint8; section_length : uint32; ctx : PWASMProcessContext);
+procedure handle(sectionId : TWASMUInt8; buffer : TWASMPUInt8; section_length : TWASMUInt32; ctx : PWASMProcessContext);
 begin
     // Handle the section
     case sectionId of
