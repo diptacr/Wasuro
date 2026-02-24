@@ -1,0 +1,36 @@
+unit wasm.test.opcode.i64and;
+
+interface
+
+procedure run;
+
+implementation
+
+uses
+    types, wasm.types, wasm.types.stack, wasm.vm, wasm.test.framework;
+
+procedure run;
+var
+    code : array[0..0] of uint8;
+    ctx : PWASMProcessContext;
+begin
+    test_begin('opcode.i64.and');
+
+    code[0] := $83;
+    ctx := make_test_context(@code[0], 1);
+    pushi64(ctx^.ExecutionState.Operand_Stack, $FF);
+    pushi64(ctx^.ExecutionState.Operand_Stack, $0F);
+    wasm.vm.tick(ctx);
+    assert_i64('$FF and $0F = $0F', popi64(ctx^.ExecutionState.Operand_Stack), $0F);
+
+    code[0] := $83;
+    ctx := make_test_context(@code[0], 1);
+    pushi64(ctx^.ExecutionState.Operand_Stack, -1);
+    pushi64(ctx^.ExecutionState.Operand_Stack, 0);
+    wasm.vm.tick(ctx);
+    assert_i64('-1 and 0 = 0', popi64(ctx^.ExecutionState.Operand_Stack), 0);
+
+    test_end;
+end;
+
+end.
