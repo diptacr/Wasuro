@@ -1,0 +1,51 @@
+unit wasm.vm.opcode.f32nearest;
+
+interface
+
+uses wasm.types.context;
+
+procedure _WASM_opcode_F32NearestOp(Context : PWASMProcessContext);
+
+implementation
+
+uses wasm.types.builtin, wasm.types.stack;
+
+procedure _WASM_opcode_F32NearestOp(Context : PWASMProcessContext);
+var a, half, r : TWASMFloat;
+    t : TWASMInt64;
+    bits : TWASMUInt32;
+    nan_bits : TWASMUInt32;
+begin
+     Inc(Context^.ExecutionState.IP);
+     a := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+     bits := TWASMPUInt32(@a)^;
+     if (bits and $7F800000) = $7F800000 then
+     begin
+          if (bits and $007FFFFF) <> 0 then begin
+               nan_bits := $7FC00000;
+               wasm.types.stack.pushf32(Context^.ExecutionState.Operand_Stack, TWASMPFloat(@nan_bits)^);
+          end else
+               wasm.types.stack.pushf32(Context^.ExecutionState.Operand_Stack, a);
+     end
+     else begin
+          t := Trunc(a);
+          r := t;
+          half := a - r;
+          if (half > 0.5) then
+             Inc(t)
+          else if (half < -0.5) then
+             Dec(t)
+          else if (half = 0.5) then
+          begin
+               if (t and 1) <> 0 then Inc(t);
+          end
+          else if (half = -0.5) then
+          begin
+               if (t and 1) <> 0 then Dec(t);
+          end;
+          r := t;
+          wasm.types.stack.pushf32(Context^.ExecutionState.Operand_Stack, r);
+     end;
+end;
+
+end.

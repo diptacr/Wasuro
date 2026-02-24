@@ -49,9 +49,10 @@ begin
         op := code[ip];
         Inc(ip); { past opcode }
         case op of
-            $02, $03, $04: begin { block, loop, if: +1 depth, skip blocktype }
+            $02, $03, $04: begin { block, loop, if: +1 depth, skip blocktype (s33 LEB128) }
                 Inc(depth);
-                Inc(ip);
+                bytesRead := read_leb128_to_uint32(@code[ip], @code[limit], @dummy32);
+                Inc(ip, bytesRead);
             end;
             $05: begin { else }
                 if stop_at_else and (depth = 1) then begin
@@ -91,6 +92,10 @@ begin
                 bytesRead := read_leb128_to_uint32(@code[ip], @code[limit], @dummy32);
                 Inc(ip, bytesRead);
             end;
+            $25, $26: begin { table.get, table.set: 1 LEB128 (table index) }
+                bytesRead := read_leb128_to_uint32(@code[ip], @code[limit], @dummy32);
+                Inc(ip, bytesRead);
+            end;
             $28, $29, $2A, $2B, $2C, $2D, $2E, $2F,
             $30, $31, $32, $33, $34, $35,
             $36, $37, $38, $39, $3A, $3B, $3C, $3D, $3E: begin { load/store: 2 LEB128 }
@@ -112,6 +117,55 @@ begin
             end;
             $43: Inc(ip, 4); { f32.const: 4 bytes }
             $44: Inc(ip, 8); { f64.const: 8 bytes }
+            $1C: begin { select t: 1 LEB128 count + count bytes }
+                bytesRead := read_leb128_to_uint32(@code[ip], @code[limit], @count);
+                Inc(ip, bytesRead);
+                Inc(ip, count);
+            end;
+            $FC: begin { 0xFC prefix: read sub-opcode LEB128, then skip immediates }
+                bytesRead := read_leb128_to_uint32(@code[ip], @code[limit], @dummy32);
+                Inc(ip, bytesRead);
+                case dummy32 of
+                    $00, $01, $02, $03, $04, $05, $06, $07: begin
+                        { sat trunc: no immediates }
+                    end;
+                    $08: begin { memory.init: 1 LEB128 (data idx) + 1 byte (mem idx) }
+                        bytesRead := read_leb128_to_uint32(@code[ip], @code[limit], @dummy32);
+                        Inc(ip, bytesRead);
+                        Inc(ip); { memory index byte }
+                    end;
+                    $09: begin { data.drop: 1 LEB128 (data idx) }
+                        bytesRead := read_leb128_to_uint32(@code[ip], @code[limit], @dummy32);
+                        Inc(ip, bytesRead);
+                    end;
+                    $0A: begin { memory.copy: 2 bytes (src mem, dst mem) }
+                        Inc(ip, 2);
+                    end;
+                    $0B: begin { memory.fill: 1 byte (mem idx) }
+                        Inc(ip);
+                    end;
+                    $0C: begin { table.init: 1 LEB128 (elem idx) + 1 LEB128 (table idx) }
+                        bytesRead := read_leb128_to_uint32(@code[ip], @code[limit], @dummy32);
+                        Inc(ip, bytesRead);
+                        bytesRead := read_leb128_to_uint32(@code[ip], @code[limit], @dummy32);
+                        Inc(ip, bytesRead);
+                    end;
+                    $0D: begin { elem.drop: 1 LEB128 (elem idx) }
+                        bytesRead := read_leb128_to_uint32(@code[ip], @code[limit], @dummy32);
+                        Inc(ip, bytesRead);
+                    end;
+                    $0E: begin { table.copy: 2 LEB128 (dst table, src table) }
+                        bytesRead := read_leb128_to_uint32(@code[ip], @code[limit], @dummy32);
+                        Inc(ip, bytesRead);
+                        bytesRead := read_leb128_to_uint32(@code[ip], @code[limit], @dummy32);
+                        Inc(ip, bytesRead);
+                    end;
+                    $0F, $10, $11: begin { table.grow/size/fill: 1 LEB128 (table idx) }
+                        bytesRead := read_leb128_to_uint32(@code[ip], @code[limit], @dummy32);
+                        Inc(ip, bytesRead);
+                    end;
+                end;
+            end;
             { All other opcodes ($00,$01,$0F,$1A,$1B,$45..$C4): no immediates }
         end;
     end;

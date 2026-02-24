@@ -6,7 +6,7 @@ uses
     wasm.types.builtin, lmemorymanager, console,
 
     wasm.types.context,
-    wasm.vm.opcodes;
+    wasm.vm.opcodes, wasm.vm.opcodes.fc;
 
 procedure init();
 function tick(Context : PWASMProcessContext) : TWASMBoolean;
@@ -14,7 +14,7 @@ function tick(Context : PWASMProcessContext) : TWASMBoolean;
 implementation
 
 var
-   OpcodeJumpTable : TWASMOpcodeJumpTable;
+   OpcodeJumpTable : PWASMOpcodeJumpTable;
 
 procedure _WASM_opcode_unimplemented(Context : PWASMProcessContext);
 begin
@@ -24,14 +24,16 @@ end;
 procedure init();
 begin
      console.writestringln('[wasm.vm] Init');
-     initializeOpcodeJumpTable(@OpcodeJumpTable[0]);
+     OpcodeJumpTable := PWASMOpcodeJumpTable(kalloc(sizeof(TWASMOpcodeJumpTable)));
+     initializeOpcodeJumpTable(@OpcodeJumpTable^[0]);
+     wasm.vm.opcodes.fc.init();
 end;
 
 function tick(Context : PWASMProcessContext) : TWASMBoolean;
 begin
      if Context^.ExecutionState.Running then begin
         if Context^.ExecutionState.IP < Context^.ExecutionState.Limit then
-           OpcodeJumpTable[Context^.ExecutionState.Code[Context^.ExecutionState.IP]](Context)
+           OpcodeJumpTable^[Context^.ExecutionState.Code[Context^.ExecutionState.IP]](Context)
         else
            Context^.ExecutionState.Running := false;
      end;

@@ -18,6 +18,8 @@ uses
     wasm.vm.opcode.return, wasm.vm.opcode.call, wasm.vm.opcode.callindirect,
     { Parametric }
     wasm.vm.opcode.drop, wasm.vm.opcode.select,
+    { Table }
+    wasm.vm.opcode.tableget, wasm.vm.opcode.tableset,
     { Variable }
     wasm.vm.opcode.localget, wasm.vm.opcode.localset, wasm.vm.opcode.localtee,
     wasm.vm.opcode.globalget, wasm.vm.opcode.globalset,
@@ -74,7 +76,45 @@ uses
     wasm.vm.opcode.i64rems, wasm.vm.opcode.i64remu,
     wasm.vm.opcode.i64and, wasm.vm.opcode.i64or, wasm.vm.opcode.i64xor,
     wasm.vm.opcode.i64shl, wasm.vm.opcode.i64shrs, wasm.vm.opcode.i64shru,
-    wasm.vm.opcode.i64rotl, wasm.vm.opcode.i64rotr;
+    wasm.vm.opcode.i64rotl, wasm.vm.opcode.i64rotr,
+    { f32 arithmetic }
+    wasm.vm.opcode.f32abs, wasm.vm.opcode.f32neg,
+    wasm.vm.opcode.f32ceil, wasm.vm.opcode.f32floor,
+    wasm.vm.opcode.f32trunc, wasm.vm.opcode.f32nearest,
+    wasm.vm.opcode.f32sqrt,
+    wasm.vm.opcode.f32add, wasm.vm.opcode.f32sub,
+    wasm.vm.opcode.f32mul, wasm.vm.opcode.f32div,
+    wasm.vm.opcode.f32min, wasm.vm.opcode.f32max,
+    wasm.vm.opcode.f32copysign,
+    { f64 arithmetic }
+    wasm.vm.opcode.f64abs, wasm.vm.opcode.f64neg,
+    wasm.vm.opcode.f64ceil, wasm.vm.opcode.f64floor,
+    wasm.vm.opcode.f64trunc, wasm.vm.opcode.f64nearest,
+    wasm.vm.opcode.f64sqrt,
+    wasm.vm.opcode.f64add, wasm.vm.opcode.f64sub,
+    wasm.vm.opcode.f64mul, wasm.vm.opcode.f64div,
+    wasm.vm.opcode.f64min, wasm.vm.opcode.f64max,
+    wasm.vm.opcode.f64copysign,
+    { Conversion instructions }
+    wasm.vm.opcode.i32wrapi64, wasm.vm.opcode.i32truncf32s,
+    wasm.vm.opcode.i32truncf32u, wasm.vm.opcode.i32truncf64s,
+    wasm.vm.opcode.i32truncf64u, wasm.vm.opcode.i64extendi32s,
+    wasm.vm.opcode.i64extendi32u, wasm.vm.opcode.i64truncf32s,
+    wasm.vm.opcode.i64truncf32u, wasm.vm.opcode.i64truncf64s,
+    wasm.vm.opcode.i64truncf64u, wasm.vm.opcode.f32converti32s,
+    wasm.vm.opcode.f32converti32u, wasm.vm.opcode.f32converti64s,
+    wasm.vm.opcode.f32converti64u, wasm.vm.opcode.f32demotef64,
+    wasm.vm.opcode.f64converti32s, wasm.vm.opcode.f64converti32u,
+    wasm.vm.opcode.f64converti64s, wasm.vm.opcode.f64converti64u,
+    wasm.vm.opcode.f64promotef32, wasm.vm.opcode.i32reinterpretf32,
+    wasm.vm.opcode.i64reinterpretf64, wasm.vm.opcode.f32reinterpreti32,
+    wasm.vm.opcode.f64reinterpreti64, wasm.vm.opcode.i32extend8s,
+    wasm.vm.opcode.i32extend16s, wasm.vm.opcode.i64extend8s,
+    wasm.vm.opcode.i64extend16s, wasm.vm.opcode.i64extend32s,
+    { Typed select }
+    wasm.vm.opcode.selecttyped,
+    { 0xFC prefix dispatch }
+    wasm.vm.opcodes.fc;
 
 procedure initializeOpcodeJumpTable(Table: PWASMOpcodeJumpTable);
 begin
@@ -94,8 +134,8 @@ begin
     Table^[ord(TWasmOpcode.CallOp)]         := @wasm.vm.opcode.call._WASM_opcode_CallOp;
     Table^[ord(TWasmOpcode.CallIndirectOp)] := @wasm.vm.opcode.callindirect._WASM_opcode_CallIndirectOp;
     Table^[ord(TWasmOpcode.DropOp)]         := @wasm.vm.opcode.drop._WASM_opcode_DropOp;
-    Table^[ord(TWasmOpcode.SelectOp)]       := @wasm.vm.opcode.select._WASM_opcode_SelectOp;
-    Table^[ord(TWasmOpcode.LocalGetOp)]     := @wasm.vm.opcode.localget._WASM_opcode_LocalGetOp;
+    Table^[ord(TWasmOpcode.SelectOp)]       := @wasm.vm.opcode.select._WASM_opcode_SelectOp;    Table^[ord(TWasmOpcode.TableGetOp)]      := @wasm.vm.opcode.tableget._WASM_opcode_TableGetOp;
+    Table^[ord(TWasmOpcode.TableSetOp)]      := @wasm.vm.opcode.tableset._WASM_opcode_TableSetOp;    Table^[ord(TWasmOpcode.LocalGetOp)]     := @wasm.vm.opcode.localget._WASM_opcode_LocalGetOp;
     Table^[ord(TWasmOpcode.LocalSetOp)]     := @wasm.vm.opcode.localset._WASM_opcode_LocalSetOp;
     Table^[ord(TWasmOpcode.LocalTeeOp)]     := @wasm.vm.opcode.localtee._WASM_opcode_LocalTeeOp;
     Table^[ord(TWasmOpcode.GlobalGetOp)]    := @wasm.vm.opcode.globalget._WASM_opcode_GlobalGetOp;
@@ -199,6 +239,71 @@ begin
     Table^[ord(TWasmOpcode.I64ShrUOp)]      := @wasm.vm.opcode.i64shru._WASM_opcode_I64ShrUOp;
     Table^[ord(TWasmOpcode.I64RotlOp)]      := @wasm.vm.opcode.i64rotl._WASM_opcode_I64RotlOp;
     Table^[ord(TWasmOpcode.I64RotrOp)]      := @wasm.vm.opcode.i64rotr._WASM_opcode_I64RotrOp;
+    { f32 arithmetic }
+    Table^[ord(TWasmOpcode.F32AbsOp)]       := @wasm.vm.opcode.f32abs._WASM_opcode_F32AbsOp;
+    Table^[ord(TWasmOpcode.F32NegOp)]       := @wasm.vm.opcode.f32neg._WASM_opcode_F32NegOp;
+    Table^[ord(TWasmOpcode.F32CeilOp)]      := @wasm.vm.opcode.f32ceil._WASM_opcode_F32CeilOp;
+    Table^[ord(TWasmOpcode.F32FloorOp)]     := @wasm.vm.opcode.f32floor._WASM_opcode_F32FloorOp;
+    Table^[ord(TWasmOpcode.F32TruncOp)]     := @wasm.vm.opcode.f32trunc._WASM_opcode_F32TruncOp;
+    Table^[ord(TWasmOpcode.F32NearestOp)]   := @wasm.vm.opcode.f32nearest._WASM_opcode_F32NearestOp;
+    Table^[ord(TWasmOpcode.F32SqrtOp)]      := @wasm.vm.opcode.f32sqrt._WASM_opcode_F32SqrtOp;
+    Table^[ord(TWasmOpcode.F32AddOp)]       := @wasm.vm.opcode.f32add._WASM_opcode_F32AddOp;
+    Table^[ord(TWasmOpcode.F32SubOp)]       := @wasm.vm.opcode.f32sub._WASM_opcode_F32SubOp;
+    Table^[ord(TWasmOpcode.F32MulOp)]       := @wasm.vm.opcode.f32mul._WASM_opcode_F32MulOp;
+    Table^[ord(TWasmOpcode.F32DivOp)]       := @wasm.vm.opcode.f32div._WASM_opcode_F32DivOp;
+    Table^[ord(TWasmOpcode.F32MinOp)]       := @wasm.vm.opcode.f32min._WASM_opcode_F32MinOp;
+    Table^[ord(TWasmOpcode.F32MaxOp)]       := @wasm.vm.opcode.f32max._WASM_opcode_F32MaxOp;
+    Table^[ord(TWasmOpcode.F32CopysignOp)]  := @wasm.vm.opcode.f32copysign._WASM_opcode_F32CopysignOp;
+    { f64 arithmetic }
+    Table^[ord(TWasmOpcode.F64AbsOp)]       := @wasm.vm.opcode.f64abs._WASM_opcode_F64AbsOp;
+    Table^[ord(TWasmOpcode.F64NegOp)]       := @wasm.vm.opcode.f64neg._WASM_opcode_F64NegOp;
+    Table^[ord(TWasmOpcode.F64CeilOp)]      := @wasm.vm.opcode.f64ceil._WASM_opcode_F64CeilOp;
+    Table^[ord(TWasmOpcode.F64FloorOp)]     := @wasm.vm.opcode.f64floor._WASM_opcode_F64FloorOp;
+    Table^[ord(TWasmOpcode.F64TruncOp)]     := @wasm.vm.opcode.f64trunc._WASM_opcode_F64TruncOp;
+    Table^[ord(TWasmOpcode.F64NearestOp)]   := @wasm.vm.opcode.f64nearest._WASM_opcode_F64NearestOp;
+    Table^[ord(TWasmOpcode.F64SqrtOp)]      := @wasm.vm.opcode.f64sqrt._WASM_opcode_F64SqrtOp;
+    Table^[ord(TWasmOpcode.F64AddOp)]       := @wasm.vm.opcode.f64add._WASM_opcode_F64AddOp;
+    Table^[ord(TWasmOpcode.F64SubOp)]       := @wasm.vm.opcode.f64sub._WASM_opcode_F64SubOp;
+    Table^[ord(TWasmOpcode.F64MulOp)]       := @wasm.vm.opcode.f64mul._WASM_opcode_F64MulOp;
+    Table^[ord(TWasmOpcode.F64DivOp)]       := @wasm.vm.opcode.f64div._WASM_opcode_F64DivOp;
+    Table^[ord(TWasmOpcode.F64MinOp)]       := @wasm.vm.opcode.f64min._WASM_opcode_F64MinOp;
+    Table^[ord(TWasmOpcode.F64MaxOp)]       := @wasm.vm.opcode.f64max._WASM_opcode_F64MaxOp;
+    Table^[ord(TWasmOpcode.F64CopysignOp)]  := @wasm.vm.opcode.f64copysign._WASM_opcode_F64CopysignOp;
+    { Conversion instructions }
+    Table^[ord(TWasmOpcode.I32WrapI64Op)]       := @wasm.vm.opcode.i32wrapi64._WASM_opcode_I32WrapI64Op;
+    Table^[ord(TWasmOpcode.I32TruncF32SOp)]     := @wasm.vm.opcode.i32truncf32s._WASM_opcode_I32TruncF32SOp;
+    Table^[ord(TWasmOpcode.I32TruncF32UOp)]     := @wasm.vm.opcode.i32truncf32u._WASM_opcode_I32TruncF32UOp;
+    Table^[ord(TWasmOpcode.I32TruncF64SOp)]     := @wasm.vm.opcode.i32truncf64s._WASM_opcode_I32TruncF64SOp;
+    Table^[ord(TWasmOpcode.I32TruncF64UOp)]     := @wasm.vm.opcode.i32truncf64u._WASM_opcode_I32TruncF64UOp;
+    Table^[ord(TWasmOpcode.I64ExtendI32SOp)]    := @wasm.vm.opcode.i64extendi32s._WASM_opcode_I64ExtendI32SOp;
+    Table^[ord(TWasmOpcode.I64ExtendI32UOp)]    := @wasm.vm.opcode.i64extendi32u._WASM_opcode_I64ExtendI32UOp;
+    Table^[ord(TWasmOpcode.I64TruncF32SOp)]     := @wasm.vm.opcode.i64truncf32s._WASM_opcode_I64TruncF32SOp;
+    Table^[ord(TWasmOpcode.I64TruncF32UOp)]     := @wasm.vm.opcode.i64truncf32u._WASM_opcode_I64TruncF32UOp;
+    Table^[ord(TWasmOpcode.I64TruncF64SOp)]     := @wasm.vm.opcode.i64truncf64s._WASM_opcode_I64TruncF64SOp;
+    Table^[ord(TWasmOpcode.I64TruncF64UOp)]     := @wasm.vm.opcode.i64truncf64u._WASM_opcode_I64TruncF64UOp;
+    Table^[ord(TWasmOpcode.F32ConvertI32SOp)]   := @wasm.vm.opcode.f32converti32s._WASM_opcode_F32ConvertI32SOp;
+    Table^[ord(TWasmOpcode.F32ConvertI32UOp)]   := @wasm.vm.opcode.f32converti32u._WASM_opcode_F32ConvertI32UOp;
+    Table^[ord(TWasmOpcode.F32ConvertI64SOp)]   := @wasm.vm.opcode.f32converti64s._WASM_opcode_F32ConvertI64SOp;
+    Table^[ord(TWasmOpcode.F32ConvertI64UOp)]   := @wasm.vm.opcode.f32converti64u._WASM_opcode_F32ConvertI64UOp;
+    Table^[ord(TWasmOpcode.F32DemoteF64Op)]     := @wasm.vm.opcode.f32demotef64._WASM_opcode_F32DemoteF64Op;
+    Table^[ord(TWasmOpcode.F64ConvertI32SOp)]   := @wasm.vm.opcode.f64converti32s._WASM_opcode_F64ConvertI32SOp;
+    Table^[ord(TWasmOpcode.F64ConvertI32UOp)]   := @wasm.vm.opcode.f64converti32u._WASM_opcode_F64ConvertI32UOp;
+    Table^[ord(TWasmOpcode.F64ConvertI64SOp)]   := @wasm.vm.opcode.f64converti64s._WASM_opcode_F64ConvertI64SOp;
+    Table^[ord(TWasmOpcode.F64ConvertI64UOp)]   := @wasm.vm.opcode.f64converti64u._WASM_opcode_F64ConvertI64UOp;
+    Table^[ord(TWasmOpcode.F64PromoteF32Op)]    := @wasm.vm.opcode.f64promotef32._WASM_opcode_F64PromoteF32Op;
+    Table^[ord(TWasmOpcode.I32ReinterpretF32Op)] := @wasm.vm.opcode.i32reinterpretf32._WASM_opcode_I32ReinterpretF32Op;
+    Table^[ord(TWasmOpcode.I64ReinterpretF64Op)] := @wasm.vm.opcode.i64reinterpretf64._WASM_opcode_I64ReinterpretF64Op;
+    Table^[ord(TWasmOpcode.F32ReinterpretI32Op)] := @wasm.vm.opcode.f32reinterpreti32._WASM_opcode_F32ReinterpretI32Op;
+    Table^[ord(TWasmOpcode.F64ReinterpretI64Op)] := @wasm.vm.opcode.f64reinterpreti64._WASM_opcode_F64ReinterpretI64Op;
+    Table^[ord(TWasmOpcode.I32Extend8SOp)]      := @wasm.vm.opcode.i32extend8s._WASM_opcode_I32Extend8SOp;
+    Table^[ord(TWasmOpcode.I32Extend16SOp)]     := @wasm.vm.opcode.i32extend16s._WASM_opcode_I32Extend16SOp;
+    Table^[ord(TWasmOpcode.I64Extend8SOp)]      := @wasm.vm.opcode.i64extend8s._WASM_opcode_I64Extend8SOp;
+    Table^[ord(TWasmOpcode.I64Extend16SOp)]     := @wasm.vm.opcode.i64extend16s._WASM_opcode_I64Extend16SOp;
+    Table^[ord(TWasmOpcode.I64Extend32SOp)]     := @wasm.vm.opcode.i64extend32s._WASM_opcode_I64Extend32SOp;
+    { Typed select }
+    Table^[ord(TWasmOpcode.SelectTypedOp)]      := @wasm.vm.opcode.selecttyped._WASM_opcode_SelectTypedOp;
+    { 0xFC prefix }
+    Table^[ord(TWasmOpcode.FCPrefixOp)]         := @wasm.vm.opcodes.fc._WASM_opcode_FCPrefix;
 end;
 
 end.

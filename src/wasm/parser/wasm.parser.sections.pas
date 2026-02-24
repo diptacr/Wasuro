@@ -16,7 +16,8 @@ uses
     wasm.parser.sections.startSection,
     wasm.parser.sections.elementSection,
     wasm.parser.sections.codeSection,
-    wasm.parser.sections.dataSection;
+    wasm.parser.sections.dataSection,
+    wasm.parser.sections.dataCountSection;
 
 procedure handle(sectionId : TWASMUInt8; buffer : TWASMPUInt8; section_length : TWASMUInt32; ctx : PWASMProcessContext);
 
@@ -50,6 +51,8 @@ begin
         ord(sidCode):     wasm.parser.sections.codeSection.handle      (buffer, section_length, ctx);
         // Data Section
         ord(sidData):     wasm.parser.sections.dataSection.handle      (buffer, section_length, ctx);
+        // DataCount Section
+        ord(sidDataCount): wasm.parser.sections.dataCountSection.handle (buffer, section_length, ctx);
     end;
 end;
 
