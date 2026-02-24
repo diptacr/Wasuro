@@ -142,7 +142,13 @@ uses
     wasm.test.opcode.i64store32,
     { Memory size/grow tests }
     wasm.test.opcode.memorysize,
-    wasm.test.opcode.memorygrow;
+    wasm.test.opcode.memorygrow,
+    { End-to-end binary tests }
+    wasm.test.binary.return42,
+    wasm.test.binary.addnums,
+    wasm.test.binary.arithmetic,
+    wasm.test.binary.locals,
+    wasm.test.binary.memroundtrip;
 
 procedure run_all_tests;
 begin
@@ -301,6 +307,13 @@ begin
     { Memory size/grow }
     wasm.test.opcode.memorysize.run;
     wasm.test.opcode.memorygrow.run;
+
+    { End-to-end binary tests }
+    wasm.test.binary.return42.run;
+    wasm.test.binary.addnums.run;
+    wasm.test.binary.arithmetic.run;
+    wasm.test.binary.locals.run;
+    wasm.test.binary.memroundtrip.run;
 
     { Summary }
     writestringln('');
