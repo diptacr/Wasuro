@@ -1,5 +1,5 @@
 # lint.ps1 — Static lint rules for the WASURO project
-# Called by build.bat before compilation. Exit 1 on any violation.
+# Called by build.ps1 before compilation. Exit 1 on any violation.
 param(
     [string]$SrcRoot = (Join-Path $PSScriptRoot 'src')
 )
@@ -43,6 +43,5 @@ if ($ruleHits -gt 0) {
 }
 
 # ── Add more rules here ─────────────────────────────────────────────
-
 if ($fail) { exit 1 }
 Write-Host 'Lint passed.'
