@@ -1,0 +1,26 @@
+unit wasm.vm.opcode.i32divu;
+
+interface
+
+uses wasm.types.context;
+
+procedure _WASM_opcode_I32DivUOp(Context : PWASMProcessContext);
+
+implementation
+
+uses console, wasm.types.builtin, wasm.types.stack;
+
+procedure _WASM_opcode_I32DivUOp(Context : PWASMProcessContext);
+var a, b : TWASMInt32;
+begin
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if b = 0 then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i32.div_u division by zero!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, TWASMInt32(TWASMUInt32(a) div TWASMUInt32(b)));
+end;
+
+end.

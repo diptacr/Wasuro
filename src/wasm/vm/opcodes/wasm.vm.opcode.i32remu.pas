@@ -1,0 +1,26 @@
+unit wasm.vm.opcode.i32remu;
+
+interface
+
+uses wasm.types.context;
+
+procedure _WASM_opcode_I32RemUOp(Context : PWASMProcessContext);
+
+implementation
+
+uses console, wasm.types.builtin, wasm.types.stack;
+
+procedure _WASM_opcode_I32RemUOp(Context : PWASMProcessContext);
+var a, b : TWASMInt32;
+begin
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if b = 0 then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i32.rem_u division by zero!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, TWASMInt32(TWASMUInt32(a) mod TWASMUInt32(b)));
+end;
+
+end.
