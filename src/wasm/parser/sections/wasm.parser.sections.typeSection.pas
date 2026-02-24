@@ -59,8 +59,11 @@ var
    i, parsedTypes : TWASMUInt32;
 
 begin
-     writestring('[wasm.parser] Handle Section: Type - Size: ');
-     writeintlnWND(section_length, 0);
+     
+     {$IFDEF DEBUG_OUTPUT}
+     console.writestring('[wasm.parser] Handle Section: Type - Size: ');
+     console.writeintlnWND(section_length, 0);
+     {$ENDIF}
      pos:= buffer;
 
      // Initialize the type section
@@ -118,7 +121,9 @@ begin
      end;
 
      // Walk the wasm.types.builtin
+     {$IFDEF DEBUG_OUTPUT}
      walk(ctx);
+     {$ENDIF}
 end;
 
 end.

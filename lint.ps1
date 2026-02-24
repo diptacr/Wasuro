@@ -45,3 +45,4 @@ if ($ruleHits -gt 0) {
 # ── Add more rules here ─────────────────────────────────────────────
 if ($fail) { exit 1 }
 Write-Host 'Lint passed.'
+exit 0

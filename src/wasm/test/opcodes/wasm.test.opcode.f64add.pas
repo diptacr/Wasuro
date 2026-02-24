@@ -66,7 +66,7 @@ begin
     code[0] := $A0;
     ctx := make_test_context(@code[0], 1);
     pushf64(ctx^.ExecutionState.Operand_Stack, TWASMPDouble(@nanBits)^);
-    nanBits := $FFF0000000000000;
+    nanBits := TWASMUInt64($FFF0000000000000);
     pushf64(ctx^.ExecutionState.Operand_Stack, TWASMPDouble(@nanBits)^);
     wasm.vm.tick(ctx);
     resultVal := popf64(ctx^.ExecutionState.Operand_Stack);

@@ -5,12 +5,11 @@ uses
 
     console,
 
-    types,
-
+    wasm.types.builtin,
     wasm.types.context,
+    wasm.types.stack,
     wasm.parser,
-    wasm.vm, wasm.test.binary.return42,
-    wasm.types.stack
+    wasm.vm
     {$IFDEF RUN_TESTS}
     , wasm.test
     , wasm.test.framework
@@ -19,6 +18,9 @@ uses
 
 var
    Context : PWASMProcessContext;
+   ModuleSize     : Int64;
+   ModuleBuffer   : TWASMPUInt8;
+   ModuleFile     : File;
 
 begin
     {$IFDEF RUN_TESTS}
@@ -26,22 +28,45 @@ begin
     wasm.test.run_all_tests;
     halt(wasm.test.framework.FailedTests);
     {$ELSE}
-    writestringln('[main] Initializing VM');
+    console.writestringln('WASURO - WebAssembly Runtime in Object Pascal');
     wasm.vm.init();
-
-    writestringln('[main] Parsing WASM Binary');
-    Context:= wasm.parser.parse(@wasm.test.binary.return42.BINARY[0], puint8(@wasm.test.binary.return42.BINARY[0] + wasm.test.binary.return42.BINARY_SIZE));
-
-    writestringln('[main] Running...');
-    Context^.ExecutionState.Running:= true;
-    while (wasm.vm.tick(Context)) do;
-    writestringln('[main] Finished Execution');
-    writestring('[main] Returns: ');
-    while Context^.ExecutionState.Operand_Stack^.Top > 0 do begin
-        write(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack),', ');
+    if ParamCount > 0 then begin
+        if not FileExists(ParamStr(1)) then begin
+            console.writestringln('File not found.');
+            halt(1);
+        end;
+        Assign(ModuleFile, ParamStr(1));
+        Reset(ModuleFile, 1);
+        ModuleSize := FileSize(ModuleFile);
+        GetMem(ModuleBuffer, ModuleSize);
+        BlockRead(ModuleFile, ModuleBuffer^, ModuleSize);
+        Close(ModuleFile);
+        console.writestringln('Module loaded.');
+        Context := wasm.parser.parse(ModuleBuffer, TWASMPUInt8(ModuleBuffer + ModuleSize));
+        while wasm.vm.tick(Context) do ;
+        console.writestringln('Execution finished.');
+        console.writestringln('');
+        console.writestringln('--- VM State ---');
+        writeln('IP:      ', Context^.ExecutionState.IP);
+        writeln('Running: ', Context^.ExecutionState.Running);
+        writeln('');
+        writeln('Operand Stack (', Context^.ExecutionState.Operand_Stack^.Top, ' entries):');
+        if Context^.ExecutionState.Operand_Stack^.Top > 0 then
+            wasm.types.stack.walk(Context^.ExecutionState.Operand_Stack)
+        else
+            console.writestringln('  (empty)');
+        writeln('');
+        writeln('Control Stack (', Context^.ExecutionState.Control_Stack^.Top, ' entries):');
+        if Context^.ExecutionState.Control_Stack^.Top > 0 then
+            wasm.types.stack.walk(Context^.ExecutionState.Control_Stack)
+        else
+            console.writestringln('  (empty)');
+        console.writestringln('----------------');
+        FreeMem(ModuleBuffer);
+    end else begin
+        console.writestringln('Usage: WASURO <module.wasm>');
+        halt(1);
     end;
-    writeln();
-    while true do sleep(1000);
     {$ENDIF}
 end.
 

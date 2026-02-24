@@ -23,8 +23,10 @@ var
     tables: PWASMTables;
     indices: TWASMPUInt32;
 begin
-    writestring('[wasm.parser] Handle Section: Element - Size: ');
-    writeintlnWND(section_length, 0);
+    {$IFDEF DEBUG_OUTPUT}
+     console.writestring('[wasm.parser] Handle Section: Element - Size: ');
+     console.writeintlnWND(section_length, 0);
+    {$ENDIF}
 
     pos := buffer;
     buf_end := buffer;
@@ -33,8 +35,10 @@ begin
     bytesRead := read_leb128_to_uint32(pos, buf_end, @seg_count);
     Inc(pos, bytesRead);
 
+    {$IFDEF DEBUG_OUTPUT}
     writestring('[wasm.parser]     Element Segments: ');
     writeintlnWND(seg_count, 0);
+    {$ENDIF}
 
     tables := ctx^.ExecutionState.Tables;
 
@@ -75,12 +79,14 @@ begin
             bytesRead := read_leb128_to_uint32(pos, buf_end, @func_count);
             Inc(pos, bytesRead);
 
+            {$IFDEF DEBUG_OUTPUT}
             writestring('[wasm.parser]     Segment ');
             writeintWND(i, 0);
             writestring(' - Mode: 0 Offset: ');
             writeintWND(offset, 0);
             writestring(' Functions: ');
             writeintlnWND(func_count, 0);
+            {$ENDIF}
 
             { Store segment data }
             indices := TWASMPUInt32(kalloc(func_count * sizeof(TWASMUInt32)));
@@ -112,12 +118,14 @@ begin
             bytesRead := read_leb128_to_uint32(pos, buf_end, @func_count);
             Inc(pos, bytesRead);
 
+            {$IFDEF DEBUG_OUTPUT}
             writestring('[wasm.parser]     Segment ');
             writeintWND(i, 0);
             writestring(' - Mode: 1 (passive) Kind: ');
             writeintWND(elem_kind, 0);
             writestring(' Functions: ');
             writeintlnWND(func_count, 0);
+            {$ENDIF}
 
             indices := TWASMPUInt32(kalloc(func_count * sizeof(TWASMUInt32)));
             for j := 0 to func_count - 1 do begin
@@ -153,6 +161,7 @@ begin
             bytesRead := read_leb128_to_uint32(pos, buf_end, @func_count);
             Inc(pos, bytesRead);
 
+            {$IFDEF DEBUG_OUTPUT}
             writestring('[wasm.parser]     Segment ');
             writeintWND(i, 0);
             writestring(' - Mode: 2 Table: ');
@@ -161,6 +170,7 @@ begin
             writeintWND(offset, 0);
             writestring(' Functions: ');
             writeintlnWND(func_count, 0);
+            {$ENDIF}
 
             indices := TWASMPUInt32(kalloc(func_count * sizeof(TWASMUInt32)));
             for j := 0 to func_count - 1 do begin

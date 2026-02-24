@@ -49,9 +49,11 @@ var
    tmpU64 : TWASMUInt64;
 
 begin
-    writestring('[wasm.parser] Handle Section: Global - Size: ');
-    writeintlnWND(section_length, 0);
-
+    {$IFDEF DEBUG_OUTPUT}
+     console.writestring('[wasm.parser] Handle Section: Global - Size: ');
+     console.writeintlnWND(section_length, 0);
+    {$ENDIF}
+    
     pos := buffer;
     bend := TWASMPUInt8(buffer + section_length);
 
@@ -115,8 +117,9 @@ begin
         if (pos < bend) and (pos^ = $0B) then
             Inc(pos);
     end;
-
+    {$IFDEF DEBUG_OUTPUT}
     walk(ctx);
+    {$ENDIF}
 end;
 
 end.

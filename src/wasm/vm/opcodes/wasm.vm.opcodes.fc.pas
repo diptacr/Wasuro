@@ -37,7 +37,9 @@ end;
 procedure init();
 var i : TWASMUInt32;
 begin
+    {$IFDEF DEBUG_OUTPUT}
     console.writestringln('[wasm.vm.opcodes.fc] Init FC Jump Table.');
+    {$ENDIF}
     FCJumpTable := PWASMFCOpcodeJumpTable(kalloc(sizeof(TWASMFCOpcodeJumpTable)));
 
     { Default all to unimplemented }

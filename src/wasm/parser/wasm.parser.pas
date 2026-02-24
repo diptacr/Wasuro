@@ -79,11 +79,15 @@ begin
     ctx:= newContext();
     pos:= buffer;
 
-    writestringln('[wasm.parser] Parsing WASM Binary');
+    {$IFDEF DEBUG_OUTPUT}
+     console.writestringln('[wasm.parser] Starting parse of WASM binary.');
+    {$ENDIF}
 
     // Check for the WASM Magic
-    if(TWASMPUInt32(pos)^ = wasm.types.constants.WASM_HDR_MAGIC) then begin
-        writestringln('[wasm.parser] Binary is valid.');
+    if(TWASMPUInt32(pos)^ = wasm.types.constants.WASM_HDR_MAGIC) then begin   
+        {$IFDEF DEBUG_OUTPUT}
+         console.writestringln('[wasm.parser] Binary is valid.');
+        {$ENDIF}
 
         // Set binary to valid
         ctx^.ValidBinary:= true;
@@ -92,8 +96,10 @@ begin
         // Read the version
         ctx^.Version:= TWASMPUInt32(pos)^;
         inc(pos, 4);
-        writestring('[wasm.parser] Version: ');
-        writeintlnWND(ctx^.Version, 0);
+        {$IFDEF DEBUG_OUTPUT}
+         console.writestring('[wasm.parser] Version: ');
+         console.writeintlnWND(ctx^.Version, 0);
+        {$ENDIF}
 
         // Read the sections
         while (pos < buffer_end) do begin

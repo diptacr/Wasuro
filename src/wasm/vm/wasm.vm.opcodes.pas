@@ -118,7 +118,9 @@ uses
 
 procedure initializeOpcodeJumpTable(Table: PWASMOpcodeJumpTable);
 begin
+    {$IFDEF DEBUG_OUTPUT}
     console.writestringln('[wasm.vm.opcodes] Init Opcode Jump Table.');
+    {$ENDIF}
     if (Table = nil) then exit;
     Table^[ord(TWasmOpcode.UnreachableOp)]  := @wasm.vm.opcode.unreachable._WASM_opcode_UnreachableOp;
     Table^[ord(TWasmOpcode.NopOp)]          := @wasm.vm.opcode.nop._WASM_opcode_NopOp;

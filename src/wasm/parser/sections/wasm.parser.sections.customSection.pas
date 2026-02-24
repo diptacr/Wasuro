@@ -12,8 +12,12 @@ implementation
 
 procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 begin
-    writestring('[wasm.parser] Handle Section: Custom - Size: ');
-    writeintlnWND(section_length, 0);
+    {$IFDEF DEBUG_OUTPUT}
+     console.writestring('[wasm.parser] Handle Section: Custom - Size: ');
+     console.writeintlnWND(section_length, 0);
+    {$ENDIF}
+    { Custom sections are ignored in this implementation }
+    console.writestringln('[wasm.parser] TODO: Custom section skipped.');
 end;
 
 end.

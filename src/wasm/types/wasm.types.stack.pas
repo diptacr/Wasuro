@@ -157,10 +157,13 @@ begin
 end;
 
 procedure walk(stack : PWASMStack);
+{$IFDEF DEBUG_OUTPUT}
 var
     i : TWASMUInt32;
+{$ENDIF}
 
 begin
+    {$IFDEF DEBUG_OUTPUT}
     // Walk the stack
     for i:=stack^.Top-1 downto 0 do begin
         case stack^.Entries[i].ValueType of
@@ -187,6 +190,7 @@ begin
             end;
         end;
     end;
+    {$ENDIF}
 end;
 
 end.
