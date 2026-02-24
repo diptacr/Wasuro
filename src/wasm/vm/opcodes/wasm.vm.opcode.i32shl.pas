@@ -1,0 +1,22 @@
+unit wasm.vm.opcode.i32shl;
+
+interface
+
+uses wasm.types.context;
+
+procedure _WASM_opcode_I32ShlOp(Context : PWASMProcessContext);
+
+implementation
+
+uses wasm.types.builtin, wasm.types.stack;
+
+procedure _WASM_opcode_I32ShlOp(Context : PWASMProcessContext);
+var a, b : TWASMInt32;
+begin
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, TWASMInt32(TWASMUInt32(a) shl (TWASMUInt32(b) and 31)));
+end;
+
+end.

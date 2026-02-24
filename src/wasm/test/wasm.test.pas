@@ -34,6 +34,7 @@ uses
     wasm.test.opcode.block,
     wasm.test.opcode.loop,
     wasm.test.opcode.ifop,
+    wasm.test.opcode.elseop,
     wasm.test.opcode.endop,
     wasm.test.opcode.br,
     wasm.test.opcode.brif,
@@ -196,6 +197,7 @@ begin
     wasm.test.opcode.block.run;
     wasm.test.opcode.loop.run;
     wasm.test.opcode.ifop.run;
+    wasm.test.opcode.elseop.run;
     wasm.test.opcode.endop.run;
     wasm.test.opcode.br.run;
     wasm.test.opcode.brif.run;

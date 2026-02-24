@@ -60,6 +60,7 @@ REM ── Build ─────────────────────
   -Fu"%SRC%\wasm\test\infra" ^
   -Fu"%SRC%\wasm\types" ^
   -Fu"%SRC%\wasm\vm" ^
+  -Fu"%SRC%\wasm\vm\opcodes" ^
   -gw3 ^
   -o"%BIN%\WASURO.exe" ^
   "%SRC%\project\WASURO.lpr"
