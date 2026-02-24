@@ -4,7 +4,7 @@ interface
 
 uses
     wasm.types.builtin, lmemorymanager, console, leb128,
-    wasm.types, wasm.types.heap, wasm.types.stack,
+    wasm.types.enums, wasm.types.sections, wasm.types.context, wasm.types.heap, wasm.types.stack,
     wasm.parser.sections;
 
 function parse(buffer: TWASMPUInt8; buffer_end: TWASMPUInt8) : PWASMProcessContext;
@@ -66,7 +66,7 @@ begin
     writestringln('[wasm.parser] Parsing WASM Binary');
 
     // Check for the WASM Magic
-    if(TWASMPUInt32(pos)^ = wasm.types.WASM_HDR_MAGIC) then begin
+    if(TWASMPUInt32(pos)^ = WASM_HDR_MAGIC) then begin
         writestringln('[wasm.parser] Binary is valid.');
 
         // Set binary to valid

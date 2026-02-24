@@ -8,7 +8,7 @@ implementation
 
 uses
     wasm.types.builtin, lmemorymanager,
-    wasm.types, wasm.types.heap, wasm.test.framework,
+    wasm.types.context, wasm.types.heap, wasm.test.framework,
     wasm.parser.sections.dataSection;
 
 procedure run;

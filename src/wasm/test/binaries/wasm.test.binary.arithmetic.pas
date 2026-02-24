@@ -20,7 +20,7 @@ procedure run;
 implementation
 
 uses
-    wasm.types.builtin, console, wasm.types, wasm.types.stack,
+    wasm.types.builtin, console, wasm.types.context, wasm.types.stack,
     wasm.parser, wasm.vm, wasm.test.framework;
 
 const

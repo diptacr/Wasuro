@@ -4,7 +4,7 @@ interface
 
 uses
     wasm.types.builtin, lmemorymanager, console,
-    wasm.types;
+    wasm.types.enums, wasm.types.values;
 
 const
     DEFAULT_STACK_SIZE = $100000;

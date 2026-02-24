@@ -4,7 +4,7 @@ interface
 
 uses
     wasm.types.builtin,
-    wasm.types,
+    wasm.types.enums, wasm.types.context,
     wasm.parser.sections.customSection,
     wasm.parser.sections.typeSection,
     wasm.parser.sections.importSection,

@@ -7,7 +7,7 @@ uses
 
     types,
 
-    wasm.types,
+    wasm.types.context,
     wasm.parser,
     wasm.vm, wasm.test.binary.return42,
     wasm.types.stack
