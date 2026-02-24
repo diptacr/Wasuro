@@ -20,12 +20,12 @@ procedure run;
 implementation
 
 uses
-    types, console, wasm.types, wasm.types.stack,
+    wasm.types.builtin, console, wasm.types, wasm.types.stack,
     wasm.parser, wasm.vm, wasm.test.framework;
 
 const
   BINARY_SIZE = 44;
-  BINARY : Array[$00..$2B] of uint8 = (
+  BINARY : Array[$00..$2B] of TWASMUInt8 = (
     $00, $61, $73, $6D,       { magic }
     $01, $00, $00, $00,       { version 1 }
     $01, $05, $01, $60,       { type section: 1 func type }
@@ -50,7 +50,7 @@ var
 begin
     test_begin('binary.arithmetic');
 
-    ctx := wasm.parser.parse(@BINARY[0], puint8(@BINARY[0] + BINARY_SIZE));
+    ctx := wasm.parser.parse(@BINARY[0], TWASMPUInt8(@BINARY[0] + BINARY_SIZE));
     assert_true('valid binary', ctx^.ValidBinary);
 
     ctx^.ExecutionState.Running := true;
