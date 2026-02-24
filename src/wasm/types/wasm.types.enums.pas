@@ -5,9 +5,6 @@ interface
 uses
     wasm.types.builtin;
 
-const
-     WASM_HDR_MAGIC = $6D736100;
-
 type
     TWasmExportType = (
       etFunc = $00,

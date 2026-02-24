@@ -29,9 +29,12 @@ end;
 
 function tick(Context : PWASMProcessContext) : TWASMBoolean;
 begin
-     if Context^.ExecutionState.Running then
+     if Context^.ExecutionState.Running then begin
         if Context^.ExecutionState.IP < Context^.ExecutionState.Limit then
-           OpcodeJumpTable[Context^.ExecutionState.Code[Context^.ExecutionState.IP]](Context);
+           OpcodeJumpTable[Context^.ExecutionState.Code[Context^.ExecutionState.IP]](Context)
+        else
+           Context^.ExecutionState.Running := false;
+     end;
      tick:= Context^.ExecutionState.Running;
 end;
 

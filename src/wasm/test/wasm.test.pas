@@ -31,6 +31,15 @@ uses
     wasm.test.opcode.f32const,
     wasm.test.opcode.f64const,
     wasm.test.opcode.return,
+    wasm.test.opcode.block,
+    wasm.test.opcode.loop,
+    wasm.test.opcode.ifop,
+    wasm.test.opcode.endop,
+    wasm.test.opcode.br,
+    wasm.test.opcode.brif,
+    wasm.test.opcode.brtable,
+    wasm.test.opcode.call,
+    wasm.test.opcode.callindirect,
     { Variable opcode tests }
     wasm.test.opcode.localget,
     wasm.test.opcode.localset,
@@ -148,7 +157,8 @@ uses
     wasm.test.binary.addnums,
     wasm.test.binary.arithmetic,
     wasm.test.binary.locals,
-    wasm.test.binary.memroundtrip;
+    wasm.test.binary.memroundtrip,
+    wasm.test.binary.controlflow;
 
 procedure run_all_tests;
 begin
@@ -183,6 +193,15 @@ begin
     wasm.test.opcode.f32const.run;
     wasm.test.opcode.f64const.run;
     wasm.test.opcode.return.run;
+    wasm.test.opcode.block.run;
+    wasm.test.opcode.loop.run;
+    wasm.test.opcode.ifop.run;
+    wasm.test.opcode.endop.run;
+    wasm.test.opcode.br.run;
+    wasm.test.opcode.brif.run;
+    wasm.test.opcode.brtable.run;
+    wasm.test.opcode.call.run;
+    wasm.test.opcode.callindirect.run;
 
     { Variable opcodes }
     wasm.test.opcode.localget.run;
@@ -314,6 +333,7 @@ begin
     wasm.test.binary.arithmetic.run;
     wasm.test.binary.locals.run;
     wasm.test.binary.memroundtrip.run;
+    wasm.test.binary.controlflow.run;
 
     { Summary }
     writestringln('');

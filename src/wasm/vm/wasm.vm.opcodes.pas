@@ -3,8 +3,9 @@ unit wasm.vm.opcodes;
 interface
 
 uses
-    console, leb128, wasm.types.builtin,
-    wasm.types.enums, wasm.types.values, wasm.types.sections, wasm.types.context, wasm.types.heap, wasm.types.stack;
+    console, leb128, lmemorymanager, wasm.types.builtin,
+    wasm.types.enums, wasm.types.values, wasm.types.sections, wasm.types.context,
+    wasm.types.heap, wasm.types.stack, wasm.types.constants, wasm.vm.control;
 
 procedure initializeOpcodeJumpTable(Table : PWASMOpcodeJumpTable);
 
@@ -21,66 +22,362 @@ begin
      Inc(Context^.ExecutionState.IP);
 end;
 
+{ ===== Control Flow Opcodes ===== }
+
 procedure _WASM_opcode_BlockOp(Context : PWASMProcessContext);
+var
+    end_ip: TWASMUInt32;
 begin
-     console.writestringln('[wasm.vm.opcodes] BlockOp not implemented!');
+    Inc(Context^.ExecutionState.IP); { past opcode $02 }
+    Inc(Context^.ExecutionState.IP); { past blocktype byte }
+    { Find the matching end byte }
+    end_ip := scan_forward(Context^.ExecutionState.Code,
+                           Context^.ExecutionState.IP,
+                           Context^.ExecutionState.Limit, false);
+    { Push block frame: br target = past the end byte }
+    push_control_frame(Context^.ExecutionState.Control_Stack,
+                       CTRL_FRAME_BLOCK,
+                       TWASMInt32(end_ip + 1),
+                       TWASMInt32(Context^.ExecutionState.Operand_Stack^.Top));
 end;
 
 procedure _WASM_opcode_LoopOp(Context : PWASMProcessContext);
+var
+    loop_start: TWASMUInt32;
 begin
-     console.writestringln('[wasm.vm.opcodes] LoopOp not implemented!');
+    Inc(Context^.ExecutionState.IP); { past opcode $03 }
+    Inc(Context^.ExecutionState.IP); { past blocktype byte }
+    loop_start := Context^.ExecutionState.IP; { first instruction of loop body }
+    { Push loop frame: br target = loop start (re-enter loop) }
+    push_control_frame(Context^.ExecutionState.Control_Stack,
+                       CTRL_FRAME_LOOP,
+                       TWASMInt32(loop_start),
+                       TWASMInt32(Context^.ExecutionState.Operand_Stack^.Top));
 end;
 
 procedure _WASM_opcode_IfOp(Context : PWASMProcessContext);
+var
+    cond: TWASMInt32;
+    end_ip, target_pos: TWASMUInt32;
 begin
-     console.writestringln('[wasm.vm.opcodes] IfOp not implemented!');
+    Inc(Context^.ExecutionState.IP); { past opcode $04 }
+    Inc(Context^.ExecutionState.IP); { past blocktype byte }
+    cond := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+    if cond <> 0 then begin
+        { Condition true: enter if-true body }
+        end_ip := scan_forward(Context^.ExecutionState.Code,
+                               Context^.ExecutionState.IP,
+                               Context^.ExecutionState.Limit, false);
+        push_control_frame(Context^.ExecutionState.Control_Stack,
+                           CTRL_FRAME_IF,
+                           TWASMInt32(end_ip + 1),
+                           TWASMInt32(Context^.ExecutionState.Operand_Stack^.Top));
+    end else begin
+        { Condition false: find else or end }
+        target_pos := scan_forward(Context^.ExecutionState.Code,
+                                   Context^.ExecutionState.IP,
+                                   Context^.ExecutionState.Limit, true);
+        if Context^.ExecutionState.Code[target_pos] = $05 then begin
+            { Has else body: find end after the else, push frame, enter else }
+            end_ip := scan_forward(Context^.ExecutionState.Code,
+                                   target_pos + 1,
+                                   Context^.ExecutionState.Limit, false);
+            push_control_frame(Context^.ExecutionState.Control_Stack,
+                               CTRL_FRAME_IF,
+                               TWASMInt32(end_ip + 1),
+                               TWASMInt32(Context^.ExecutionState.Operand_Stack^.Top));
+            Context^.ExecutionState.IP := target_pos + 1;
+        end else begin
+            { No else: skip entire if construct }
+            Context^.ExecutionState.IP := target_pos + 1;
+        end;
+    end;
 end;
 
 procedure _WASM_opcode_ElseOp(Context : PWASMProcessContext);
+var
+    cs, os: PWASMStack;
+    saved_top: TWASMInt32;
+    end_ip: TWASMUInt32;
+    result_entry: TWASMStackEntry;
 begin
-     console.writestringln('[wasm.vm.opcodes] ElseOp not implemented!');
+    cs := Context^.ExecutionState.Control_Stack;
+    os := Context^.ExecutionState.Operand_Stack;
+    { Reached by falling through from if-true body }
+    saved_top := cs^.Entries[cs^.Top - 2].i32Value;
+    { Preserve result value if any }
+    if os^.Top > TWASMUInt32(saved_top) then begin
+        result_entry := os^.Entries[os^.Top - 1];
+        os^.Top := TWASMUInt32(saved_top);
+        os^.Entries[os^.Top] := result_entry;
+        Inc(os^.Top);
+    end else begin
+        os^.Top := TWASMUInt32(saved_top);
+    end;
+    { Pop the IF frame }
+    Dec(cs^.Top, 3);
+    { Skip the else body to the matching end }
+    Inc(Context^.ExecutionState.IP); { past else byte }
+    end_ip := scan_forward(Context^.ExecutionState.Code,
+                           Context^.ExecutionState.IP,
+                           Context^.ExecutionState.Limit, false);
+    Context^.ExecutionState.IP := end_ip + 1; { past end byte }
 end;
 
 procedure _WASM_opcode_EndOp(Context : PWASMProcessContext);
+var
+    cs, os: PWASMStack;
+    saved_top, return_ip: TWASMInt32;
+    result_entry: TWASMStackEntry;
 begin
-     console.writestringln('[wasm.vm.opcodes] EndOp not implemented!');
+    cs := Context^.ExecutionState.Control_Stack;
+    os := Context^.ExecutionState.Operand_Stack;
+
+    { No control frame: end of top-level code }
+    if cs^.Top = 0 then begin
+        Context^.ExecutionState.Running := false;
+        exit;
+    end;
+
+    { Read the top control frame }
+    saved_top := cs^.Entries[cs^.Top - 2].i32Value;
+
+    { Preserve block result value }
+    if os^.Top > TWASMUInt32(saved_top) then begin
+        result_entry := os^.Entries[os^.Top - 1];
+        os^.Top := TWASMUInt32(saved_top);
+        os^.Entries[os^.Top] := result_entry;
+        Inc(os^.Top);
+    end else begin
+        os^.Top := TWASMUInt32(saved_top);
+    end;
+
+    { Pop the block frame }
+    Dec(cs^.Top, 3);
+
+    { Check if a call frame is now on top (function return) }
+    if (cs^.Top >= 4) and (cs^.Entries[cs^.Top - 1].i32Value = CTRL_FRAME_CALL) then begin
+        saved_top := cs^.Entries[cs^.Top - 2].i32Value;
+        return_ip := cs^.Entries[cs^.Top - 3].i32Value;
+        { Move return values to caller stack level }
+        if os^.Top > TWASMUInt32(saved_top) then begin
+            result_entry := os^.Entries[os^.Top - 1];
+            os^.Top := TWASMUInt32(saved_top);
+            os^.Entries[os^.Top] := result_entry;
+            Inc(os^.Top);
+        end else begin
+            os^.Top := TWASMUInt32(saved_top);
+        end;
+        { Restore locals }
+        Context^.ExecutionState.Locals := PWASMLocals(cs^.Entries[cs^.Top - 4].i64Value);
+        { Pop call frame }
+        Dec(cs^.Top, 4);
+        { Resume caller }
+        Context^.ExecutionState.IP := TWASMUInt32(return_ip);
+        exit;
+    end;
+
+    { Normal block/loop/if end: advance past end byte }
+    Inc(Context^.ExecutionState.IP);
 end;
 
 procedure _WASM_opcode_BrOp(Context : PWASMProcessContext);
+var
+    label_depth: TWASMUInt32;
+    bytesRead: TWASMUInt8;
 begin
-     console.writestringln('[wasm.vm.opcodes] BrOp not implemented!');
+    Inc(Context^.ExecutionState.IP); { past opcode $0C }
+    bytesRead := read_leb128_to_uint32(
+        @Context^.ExecutionState.Code[Context^.ExecutionState.IP],
+        @Context^.ExecutionState.Code[Context^.ExecutionState.Limit],
+        @label_depth);
+    { do_branch sets IP; no need to advance past immediate }
+    do_branch(Context, label_depth);
 end;
 
 procedure _WASM_opcode_BrIfOp(Context : PWASMProcessContext);
+var
+    label_depth: TWASMUInt32;
+    bytesRead: TWASMUInt8;
+    cond: TWASMInt32;
 begin
-     console.writestringln('[wasm.vm.opcodes] BrIfOp not implemented!');
+    Inc(Context^.ExecutionState.IP); { past opcode $0D }
+    bytesRead := read_leb128_to_uint32(
+        @Context^.ExecutionState.Code[Context^.ExecutionState.IP],
+        @Context^.ExecutionState.Code[Context^.ExecutionState.Limit],
+        @label_depth);
+    Inc(Context^.ExecutionState.IP, bytesRead); { past label depth }
+    cond := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+    if cond <> 0 then
+        do_branch(Context, label_depth);
+    { else: continue at current IP }
 end;
 
 procedure _WASM_opcode_BrTableOp(Context : PWASMProcessContext);
+var
+    count, idx, selected, dummy: TWASMUInt32;
+    skip_count, i: TWASMUInt32;
+    bytesRead: TWASMUInt8;
 begin
-     console.writestringln('[wasm.vm.opcodes] BrTableOp not implemented!');
+    Inc(Context^.ExecutionState.IP); { past opcode $0E }
+    { Read label count }
+    bytesRead := read_leb128_to_uint32(
+        @Context^.ExecutionState.Code[Context^.ExecutionState.IP],
+        @Context^.ExecutionState.Code[Context^.ExecutionState.Limit],
+        @count);
+    Inc(Context^.ExecutionState.IP, bytesRead);
+    { Pop index from operand stack }
+    idx := TWASMUInt32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack));
+    { Determine how many labels to skip to reach our target }
+    if idx >= count then
+        skip_count := count
+    else
+        skip_count := idx;
+    { Skip labels we don't need }
+    for i := 1 to skip_count do begin
+        bytesRead := read_leb128_to_uint32(
+            @Context^.ExecutionState.Code[Context^.ExecutionState.IP],
+            @Context^.ExecutionState.Code[Context^.ExecutionState.Limit],
+            @dummy);
+        Inc(Context^.ExecutionState.IP, bytesRead);
+    end;
+    { Read the selected label (or default if idx >= count) }
+    bytesRead := read_leb128_to_uint32(
+        @Context^.ExecutionState.Code[Context^.ExecutionState.IP],
+        @Context^.ExecutionState.Code[Context^.ExecutionState.Limit],
+        @selected);
+    { Branch to selected depth }
+    do_branch(Context, selected);
 end;
 
 procedure _WASM_opcode_ReturnOp(Context : PWASMProcessContext);
+var
+    cs, os: PWASMStack;
+    ft, saved_top, return_ip: TWASMInt32;
+    result_entry: TWASMStackEntry;
 begin
-     console.writestringln('[wasm.vm.opcodes.returnop] Partially implemented Opcode!');
-     if Context^.ExecutionState.Control_Stack^.Top > 0 then begin
-          Context^.ExecutionState.IP := wasm.types.stack.popfunc(Context^.ExecutionState.Control_Stack);
-          Context^.ExecutionState.Control_Stack^.Top := wasm.types.stack.popfunc(Context^.ExecutionState.Control_Stack);
-     end else begin
-          console.writestringln('[wasm.vm.opcodes.returnop] No frame to return to! Stopping Execution.');
-          Context^.ExecutionState.Running := false;
-     end;
+    cs := Context^.ExecutionState.Control_Stack;
+    os := Context^.ExecutionState.Operand_Stack;
+    if cs^.Top = 0 then begin
+        Context^.ExecutionState.Running := false;
+        exit;
+    end;
+    { Walk backwards, popping block frames until we find a call frame }
+    while cs^.Top > 0 do begin
+        ft := cs^.Entries[cs^.Top - 1].i32Value;
+        if ft = CTRL_FRAME_CALL then begin
+            { Found call frame - restore caller state }
+            saved_top := cs^.Entries[cs^.Top - 2].i32Value;
+            return_ip := cs^.Entries[cs^.Top - 3].i32Value;
+            { Preserve return value }
+            if os^.Top > TWASMUInt32(saved_top) then begin
+                result_entry := os^.Entries[os^.Top - 1];
+                os^.Top := TWASMUInt32(saved_top);
+                os^.Entries[os^.Top] := result_entry;
+                Inc(os^.Top);
+            end else begin
+                os^.Top := TWASMUInt32(saved_top);
+            end;
+            { Restore locals }
+            Context^.ExecutionState.Locals := PWASMLocals(cs^.Entries[cs^.Top - 4].i64Value);
+            Dec(cs^.Top, 4);
+            Context^.ExecutionState.IP := TWASMUInt32(return_ip);
+            exit;
+        end else begin
+            { Pop block frame }
+            Dec(cs^.Top, 3);
+        end;
+    end;
+    { No call frame found - top level return, stop execution }
+    Context^.ExecutionState.Running := false;
 end;
 
 procedure _WASM_opcode_CallOp(Context : PWASMProcessContext);
+var
+    func_idx, type_idx: TWASMUInt32;
+    bytesRead: TWASMUInt8;
+    func_type: PWASMType;
+    code_entry: PWASMCodeEntry;
+    param_count, decl_count, total_count: TWASMUInt32;
+    new_locals: PWASMLocals;
+    i, j: TWASMUInt32;
+    return_ip, saved_top: TWASMUInt32;
+    cs, os: PWASMStack;
 begin
-     console.writestringln('[wasm.vm.opcodes] CallOp not implemented!');
+    cs := Context^.ExecutionState.Control_Stack;
+    os := Context^.ExecutionState.Operand_Stack;
+
+    Inc(Context^.ExecutionState.IP); { past opcode $10 }
+    bytesRead := read_leb128_to_uint32(
+        @Context^.ExecutionState.Code[Context^.ExecutionState.IP],
+        @Context^.ExecutionState.Code[Context^.ExecutionState.Limit],
+        @func_idx);
+    Inc(Context^.ExecutionState.IP, bytesRead);
+    return_ip := Context^.ExecutionState.IP; { instruction after call }
+
+    { Look up function metadata }
+    type_idx   := Context^.Sections.FunctionSection^.Functions[func_idx].Index;
+    func_type  := @Context^.Sections.TypeSection^.Types[type_idx];
+    code_entry := @Context^.Sections.CodeSection^.Entries[func_idx];
+
+    param_count := func_type^.ParamCount;
+    decl_count  := code_entry^.Locals.LocalCount;
+    total_count := param_count + decl_count;
+
+    { Allocate new locals }
+    new_locals := PWASMLocals(kalloc(sizeof(TWASMLocals)));
+    new_locals^.LocalCount := total_count;
+    new_locals^.TypeCount  := total_count;
+    if total_count > 0 then
+        new_locals^.Locals := PWASMValueEntry(kalloc(sizeof(TWASMValueEntry) * total_count))
+    else
+        new_locals^.Locals := nil;
+
+    { Pop parameters from operand stack (reverse order into locals) }
+    if param_count > 0 then begin
+        for i := param_count downto 1 do begin
+            j := i - 1;
+            new_locals^.Locals[j].ValueType := func_type^.ParamTypes[j].ValueType;
+            case func_type^.ParamTypes[j].ValueType of
+                vti32: new_locals^.Locals[j].i32Value := wasm.types.stack.popi32(os);
+                vti64: new_locals^.Locals[j].i64Value := wasm.types.stack.popi64(os);
+                vtf32: new_locals^.Locals[j].f32Value := wasm.types.stack.popf32(os);
+                vtf64: new_locals^.Locals[j].f64Value := wasm.types.stack.popf64(os);
+            end;
+        end;
+    end;
+
+    { Initialize declared locals to zero }
+    if decl_count > 0 then begin
+        for i := param_count to total_count - 1 do begin
+            j := i - param_count;
+            new_locals^.Locals[i].ValueType := code_entry^.Locals.Locals[j].ValueType;
+            new_locals^.Locals[i].i64Value := 0;
+        end;
+    end;
+
+    saved_top := os^.Top; { stack depth after popping args }
+
+    { Push call frame (4 entries): saved_locals_ptr, return_ip, saved_top, marker }
+    wasm.types.stack.pushi64(cs, TWASMInt64(Context^.ExecutionState.Locals));
+    wasm.types.stack.pushi32(cs, TWASMInt32(return_ip));
+    wasm.types.stack.pushi32(cs, TWASMInt32(saved_top));
+    wasm.types.stack.pushi32(cs, CTRL_FRAME_CALL);
+
+    { Push implicit function block frame }
+    push_control_frame(cs, CTRL_FRAME_BLOCK,
+                       TWASMInt32(code_entry^.CodeIndex + code_entry^.CodeLength),
+                       TWASMInt32(os^.Top));
+
+    { Switch to callee }
+    Context^.ExecutionState.IP     := code_entry^.CodeIndex;
+    Context^.ExecutionState.Locals := new_locals;
 end;
 
 procedure _WASM_opcode_CallIndirectOp(Context : PWASMProcessContext);
 begin
-     console.writestringln('[wasm.vm.opcodes] CallIndirectOp not implemented!');
+    console.writestringln('[wasm.vm.opcodes] Trap: call_indirect requires table support!');
+    Context^.ExecutionState.Running := false;
 end;
 
 procedure _WASM_opcode_DropOp(Context : PWASMProcessContext);
