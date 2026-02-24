@@ -7,11 +7,11 @@ procedure run;
 implementation
 
 uses
-    types, wasm.types, wasm.types.stack, wasm.vm, wasm.test.framework;
+    wasm.types.builtin, wasm.types, wasm.types.stack, wasm.vm, wasm.test.framework;
 
 procedure run;
 var
-    code : array[0..0] of uint8;
+    code : array[0..0] of TWASMUInt8;
     ctx : PWASMProcessContext;
 begin
     test_begin('opcode.i64.shr_u');
@@ -28,7 +28,7 @@ begin
     pushi64(ctx^.ExecutionState.Operand_Stack, -1);
     pushi64(ctx^.ExecutionState.Operand_Stack, 1);
     wasm.vm.tick(ctx);
-    assert_i64('-1 shr_u 1 = $7FFFFFFFFFFFFFFF', popi64(ctx^.ExecutionState.Operand_Stack), int64($7FFFFFFFFFFFFFFF));
+    assert_i64('-1 shr_u 1 = $7FFFFFFFFFFFFFFF', popi64(ctx^.ExecutionState.Operand_Stack), TWASMInt64($7FFFFFFFFFFFFFFF));
 
     test_end;
 end;

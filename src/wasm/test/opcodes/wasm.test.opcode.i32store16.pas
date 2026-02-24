@@ -7,13 +7,13 @@ procedure run;
 implementation
 
 uses
-    types, wasm.types, wasm.types.heap, wasm.types.stack, wasm.vm, wasm.test.framework;
+    wasm.types.builtin, wasm.types, wasm.types.heap, wasm.types.stack, wasm.vm, wasm.test.framework;
 
 procedure run;
 var
-    code : array[0..2] of uint8;
+    code : array[0..2] of TWASMUInt8;
     ctx : PWASMProcessContext;
-    readBack : uint16;
+    readBack : TWASMUInt16;
 begin
     test_begin('opcode.i32.store16');
 
@@ -22,10 +22,10 @@ begin
     code[2] := $00; { offset }
     ctx := make_test_context(@code[0], 3);
     pushi32(ctx^.ExecutionState.Operand_Stack, 0);              { address }
-    pushi32(ctx^.ExecutionState.Operand_Stack, int32($12345678)); { value }
+    pushi32(ctx^.ExecutionState.Operand_Stack, TWASMInt32($12345678)); { value }
     wasm.vm.tick(ctx);
     wasm.types.heap.read_uint16(0, ctx^.ExecutionState.Memory, @readBack);
-    assert_u32('stored low 16 bits $5678', uint32(readBack), $5678);
+    assert_u32('stored low 16 bits $5678', TWASMUInt32(readBack), $5678);
 
     test_end;
 end;

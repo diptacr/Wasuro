@@ -3,14 +3,14 @@ unit wasm.parser.sections.customSection;
 interface
 
 uses
-    types, lmemorymanager, console, leb128,
+    wasm.types.builtin, lmemorymanager, console, leb128,
     wasm.types;
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 
 implementation
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 begin
     writestring('[wasm.parser] Handle Section: Custom - Size: ');
     writeintlnWND(section_length, 0);

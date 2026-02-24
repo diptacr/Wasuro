@@ -3,7 +3,7 @@ unit wasm.types;
 interface
 
 uses
-    types,
+    wasm.types.builtin,
     wasm.types.heap;
 
 const
@@ -171,53 +171,53 @@ type
 
 type
     uint128 = packed record
-      low, high: uint64;
+      low, high: TWASMUInt64;
     end;
 
     TWASMExportEntry = record
-      NameLength: uint32;
-      Name: pchar;
+      NameLength: TWASMUInt32;
+      Name: TWASMPChar;
       ExportType: TWasmExportType;
-      FunctionIndex: uint32;
+      FunctionIndex: TWASMUInt32;
     end;
     PWASMExportEntry = ^TWASMExportEntry;
 
     TWASMExportSection = record
-      ExportCount: uint32;
+      ExportCount: TWASMUInt32;
       Entries: PWASMExportEntry;
     end;
     PWASMExportSection = ^TWASMExportSection;
 
     TWASMStackEntry = record
         ValueType: TWasmValueType;
-        case Integer of
-          0: (i32Value: int32);
-          1: (i64Value: int64);
-          2: (f32Value: float);
-          3: (f64Value: double);
+        case TWASMInt32 of
+          0: (i32Value: TWASMInt32);
+          1: (i64Value: TWASMInt64);
+          2: (f32Value: TWASMFloat);
+          3: (f64Value: TWASMDouble);
           4: (v128Value: uint128);
-          5: (funcValue: uint32);
-          6: (extnValue: uint32);
+          5: (funcValue: TWASMUInt32);
+          6: (extnValue: TWASMUInt32);
     end;
     PWASMStackEntry = ^TWASMStackEntry;
 
     TWASMValueEntry = record
         ValueType: TWasmValueType;
-        case Integer of
-          0: (i32Value: int32);
-          1: (i64Value: int64);
-          2: (f32Value: float);
-          3: (f64Value: double);
+        case TWASMInt32 of
+          0: (i32Value: TWASMInt32);
+          1: (i64Value: TWASMInt64);
+          2: (f32Value: TWASMFloat);
+          3: (f64Value: TWASMDouble);
           4: (v128Value: uint128);
-          5: (funcValue: uint32);
-          6: (extnValue: uint32);
+          5: (funcValue: TWASMUInt32);
+          6: (extnValue: TWASMUInt32);
     end;
     PWASMValueEntry = ^TWASMValueEntry;
 
     TWASMStack = record
-        Size: uint32;
-        Top: uint32;
-        Full: boolean;
+        Size: TWASMUInt32;
+        Top: TWASMUInt32;
+        Full: TWASMBoolean;
         Entries: PWASMStackEntry;
     end;
     PWASMStack = ^TWASMStack;
@@ -229,88 +229,88 @@ type
 
     PWASMType = ^TWASMType;
     TWASMType = record
-      _type        : uint8;
-      ParamCount   : uint32;
+      _type        : TWASMUInt8;
+      ParamCount   : TWASMUInt32;
       ParamTypes   : PWASMParam;
-      ReturnCount  : uint32;
+      ReturnCount  : TWASMUInt32;
       ReturnTypes  : PWASMParam;
     end;
 
     TWASMTypeSection = record
-      TypeCount     : uint32;
+      TypeCount     : TWASMUInt32;
       Types         : PWASMType;
     end;
     PWASMTypeSection = ^TWASMTypeSection;
 
     PWASMFunction = ^TWASMFunction;
     TWASMFunction = record
-      Index : uint32;
+      Index : TWASMUInt32;
     end;
 
     PWASMFunctionSection = ^TWASMFunctionSection;
     TWASMFunctionSection = record
-      FunctionCount : uint32;
+      FunctionCount : TWASMUInt32;
       Functions : PWASMFunction;
     end;
 
     TWASMLocals = record
-      LocalCount  : uint32;
-      TypeCount   : uint32;
+      LocalCount  : TWASMUInt32;
+      TypeCount   : TWASMUInt32;
       Locals      : PWASMValueEntry;
     end;
     PWASMLocals = ^TWASMLocals;
 
     TWASMCodeEntry = record
-      SectionLength : uint32;
-      CodeLength    : uint32;
-      Code          : puint8;
-      CodeIndex     : uint32;
+      SectionLength : TWASMUInt32;
+      CodeLength    : TWASMUInt32;
+      Code          : TWASMPUInt8;
+      CodeIndex     : TWASMUInt32;
       Locals        : TWASMLocals;
     end;
     PWASMCodeEntry = ^TWASMCodeEntry;
 
     TWASMCodeSection = record
-      CodeCount : uint32;
+      CodeCount : TWASMUInt32;
       Entries   : PWASMCodeEntry;
     end;
     PWASMCodeSection = ^TWASMCodeSection;
 
     TWASMGlobalEntry = record
       ValueType : TWasmValueType;
-      Mutable   : boolean;
+      Mutable   : TWASMBoolean;
       Value     : TWASMValueEntry;
     end;
     PWASMGlobalEntry = ^TWASMGlobalEntry;
 
     TWASMGlobals = record
-      GlobalCount : uint32;
+      GlobalCount : TWASMUInt32;
       Globals     : PWASMGlobalEntry;
     end;
     PWASMGlobals = ^TWASMGlobals;
 
     TWASMMemoryLimits = record
-      HasMax   : boolean;
-      InitialPages : uint32;
-      MaxPages     : uint32;
+      HasMax   : TWASMBoolean;
+      InitialPages : TWASMUInt32;
+      MaxPages     : TWASMUInt32;
     end;
     PWASMMemoryLimits = ^TWASMMemoryLimits;
 
     TWASMMemorySection = record
-      MemoryCount : uint32;
+      MemoryCount : TWASMUInt32;
       Memories    : PWASMMemoryLimits;
     end;
     PWASMMemorySection = ^TWASMMemorySection;
 
     TWASMState = record
-      Code   : puint8;
-      Limit  : uint32;
+      Code   : TWASMPUInt8;
+      Limit  : TWASMUInt32;
       Locals : PWASMLocals;
       Memory : PWasmHeap;
       Globals : PWASMGlobals;
       Control_Stack : PWASMStack;
       Operand_Stack : PWASMStack;
-      IP : uint32;
-      Running : boolean;
+      IP : TWASMUInt32;
+      Running : TWASMBoolean;
     end;
     PWASMState = ^TWASMState;
 
@@ -320,12 +320,12 @@ type
       ExportSection   : PWASMExportSection;
       CodeSection     : PWASMCodeSection;
       MemorySection   : PWASMMemorySection;
-      StartIndex      : int32;  { -1 = no start function }
+      StartIndex      : TWASMInt32;  { -1 = no start function }
     end;
 
     TWASMProcessContext = record
-      ValidBinary       : Boolean;
-      Version           : uint32;
+      ValidBinary       : TWASMBoolean;
+      Version           : TWASMUInt32;
       ExecutionState    : TWASMState;
       Sections          : TWASMSections;
     end;
@@ -336,14 +336,14 @@ type
     TWASMOpcodeJumpTable = array[0..255] of FProcessWASMOpCode;
     PWASMOpcodeJumpTable = ^TWASMOpcodeJumpTable;
 
-function GetWasmValueTypeString(ValueType : TWasmValueType) : pchar;
-function GetWasmTypeTypeString(TypeType : TWasmTypeType) : pchar;
-function GetWasmBinarySectionIdString(SectionId : TWasmBinarySectionId) : pchar;
-function GetWasmExportTypeString(ExportType : TWasmExportType) : pchar;
+function GetWasmValueTypeString(ValueType : TWasmValueType) : TWASMPChar;
+function GetWasmTypeTypeString(TypeType : TWasmTypeType) : TWASMPChar;
+function GetWasmBinarySectionIdString(SectionId : TWasmBinarySectionId) : TWASMPChar;
+function GetWasmExportTypeString(ExportType : TWasmExportType) : TWASMPChar;
 
 implementation
 
-function GetWasmValueTypeString(ValueType : TWasmValueType) : pchar;
+function GetWasmValueTypeString(ValueType : TWasmValueType) : TWASMPChar;
 begin
     case ValueType of
       vtNone : GetWasmValueTypeString := 'None';
@@ -358,7 +358,7 @@ begin
     end; 
 end;
 
-function GetWasmTypeTypeString(TypeType : TWasmTypeType) : pchar;
+function GetWasmTypeTypeString(TypeType : TWasmTypeType) : TWASMPChar;
 begin
     case TypeType of
       ttFunc : GetWasmTypeTypeString := 'Func';
@@ -366,7 +366,7 @@ begin
     end; 
 end;
 
-function GetWasmBinarySectionIdString(SectionId : TWasmBinarySectionId) : pchar;
+function GetWasmBinarySectionIdString(SectionId : TWasmBinarySectionId) : TWASMPChar;
 begin
     case SectionId of
       sidCustom   : GetWasmBinarySectionIdString := 'Custom';
@@ -385,7 +385,7 @@ begin
     end;
 end;
 
-function GetWasmExportTypeString(ExportType : TWasmExportType) : pchar;
+function GetWasmExportTypeString(ExportType : TWasmExportType) : TWASMPChar;
 begin
     case ExportType of
       etFunc   : GetWasmExportTypeString := 'Function';

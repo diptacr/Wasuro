@@ -7,11 +7,11 @@ procedure run;
 implementation
 
 uses
-    types, wasm.types, wasm.types.stack, wasm.vm, wasm.test.framework;
+    wasm.types.builtin, wasm.types, wasm.types.stack, wasm.vm, wasm.test.framework;
 
 procedure run;
 var
-    code : array[0..0] of uint8;
+    code : array[0..0] of TWASMUInt8;
     ctx : PWASMProcessContext;
 begin
     test_begin('opcode.i64.div_s');
@@ -41,7 +41,7 @@ begin
     { Edge: INT64_MIN / -1 traps (overflow) }
     code[0] := $7F;
     ctx := make_test_context(@code[0], 1);
-    pushi64(ctx^.ExecutionState.Operand_Stack, int64($8000000000000000));
+    pushi64(ctx^.ExecutionState.Operand_Stack, TWASMInt64($8000000000000000));
     pushi64(ctx^.ExecutionState.Operand_Stack, -1);
     wasm.vm.tick(ctx);
     assert_bool('INT64_MIN div -1 traps', ctx^.ExecutionState.Running, false);

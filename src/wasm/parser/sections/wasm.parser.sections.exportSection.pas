@@ -3,17 +3,17 @@ unit wasm.parser.sections.exportSection;
 interface
 
 uses
-    types, lmemorymanager, console, leb128,
+    wasm.types.builtin, lmemorymanager, console, leb128,
     wasm.types;
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 
 implementation
 
 procedure walk(ctx : PWASMProcessContext);
 var
    currentEntry : PWASMExportEntry;
-   i : uint32;
+   i : TWASMUInt32;
 
 begin
     // Walk the export entries
@@ -28,12 +28,12 @@ begin
     end;
 end;
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 var
-   pos, bend : puint8;
-   bytesRead : uint8;
+   pos, bend : TWASMPUInt8;
+   bytesRead : TWASMUInt8;
    currentEntry : PWASMExportEntry;
-   i,j : uint32;
+   i,j : TWASMUInt32;
 
 begin
     writestring('[wasm.parser] Handle Section: Export - Size: ');
@@ -41,7 +41,7 @@ begin
 
     // Initialize the read/end pointers
     pos:= buffer;
-    bend:= puint8(pos + section_length);
+    bend:= TWASMPUInt8(pos + section_length);
 
     // Initialize the export section
     ctx^.Sections.ExportSection:= PWASMExportSection(kalloc(sizeof(TWASMExportSection)));
@@ -69,12 +69,12 @@ begin
             inc(pos, bytesRead);
 
             // Read the export name
-            currentEntry^.Name:= pchar(kalloc(currentEntry^.NameLength + 1));
+            currentEntry^.Name:= TWASMPChar(kalloc(currentEntry^.NameLength + 1));
             for j:=0 to currentEntry^.NameLength - 1 do begin
-                currentEntry^.Name[j]:= char(pos^);
+                currentEntry^.Name[j]:= TWASMChar(pos^);
                 inc(pos);
             end;
-            currentEntry^.Name[currentEntry^.NameLength]:= char($00);
+            currentEntry^.Name[currentEntry^.NameLength]:= TWASMChar($00);
 
             // Read the export type
             currentEntry^.ExportType:= TWasmExportType(pos^);

@@ -7,11 +7,11 @@ procedure run;
 implementation
 
 uses
-    types, wasm.types, wasm.types.stack, wasm.vm, wasm.test.framework;
+    wasm.types.builtin, wasm.types, wasm.types.stack, wasm.vm, wasm.test.framework;
 
 procedure run;
 var
-    code : array[0..0] of uint8;
+    code : array[0..0] of TWASMUInt8;
     ctx : PWASMProcessContext;
 begin
     test_begin('opcode.i32.shl');
@@ -30,7 +30,7 @@ begin
     pushi32(ctx^.ExecutionState.Operand_Stack, 1);
     pushi32(ctx^.ExecutionState.Operand_Stack, 31);
     wasm.vm.tick(ctx);
-    assert_i32('1 shl 31=$80000000', popi32(ctx^.ExecutionState.Operand_Stack), int32($80000000));
+    assert_i32('1 shl 31=$80000000', popi32(ctx^.ExecutionState.Operand_Stack), TWASMInt32($80000000));
 
     { Test: 1 shl 0 = 1 }
     code[0] := $74;

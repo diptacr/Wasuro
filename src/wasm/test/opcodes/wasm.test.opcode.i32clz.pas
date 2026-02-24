@@ -7,11 +7,11 @@ procedure run;
 implementation
 
 uses
-    types, wasm.types, wasm.types.stack, wasm.vm, wasm.test.framework;
+    wasm.types.builtin, wasm.types, wasm.types.stack, wasm.vm, wasm.test.framework;
 
 procedure run;
 var
-    code : array[0..0] of uint8;
+    code : array[0..0] of TWASMUInt8;
     ctx : PWASMProcessContext;
 begin
     test_begin('opcode.i32.clz');
@@ -33,14 +33,14 @@ begin
     { Test: clz($80000000) = 0 }
     code[0] := $67;
     ctx := make_test_context(@code[0], 1);
-    pushi32(ctx^.ExecutionState.Operand_Stack, int32($80000000));
+    pushi32(ctx^.ExecutionState.Operand_Stack, TWASMInt32($80000000));
     wasm.vm.tick(ctx);
     assert_i32('clz($80000000)=0', popi32(ctx^.ExecutionState.Operand_Stack), 0);
 
     { Test: clz($00010000) = 15 }
     code[0] := $67;
     ctx := make_test_context(@code[0], 1);
-    pushi32(ctx^.ExecutionState.Operand_Stack, int32($00010000));
+    pushi32(ctx^.ExecutionState.Operand_Stack, TWASMInt32($00010000));
     wasm.vm.tick(ctx);
     assert_i32('clz($00010000)=15', popi32(ctx^.ExecutionState.Operand_Stack), 15);
 

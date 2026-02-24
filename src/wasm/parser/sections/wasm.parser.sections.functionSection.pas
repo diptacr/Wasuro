@@ -3,17 +3,17 @@ unit wasm.parser.sections.functionSection;
 interface
 
 uses
-    types, lmemorymanager, console, leb128,
+    wasm.types.builtin, lmemorymanager, console, leb128,
     wasm.types;
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 
 implementation
 
 procedure walk(ctx : PWASMProcessContext);
 var
    currentFunc : PWASMFunction;
-   i : uint32;
+   i : TWASMUInt32;
 
 begin
     // Walk the functions
@@ -24,12 +24,12 @@ begin
     end;
 end;
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 var
-   pos, bend : puint8;
-   bytesRead : uint8;
+   pos, bend : TWASMPUInt8;
+   bytesRead : TWASMUInt8;
    currentFunc : PWASMFunction;
-   i : uint32;
+   i : TWASMUInt32;
 
 begin
     writestring('[wasm.parser] Handle Section: Function - Size: ');
@@ -37,7 +37,7 @@ begin
 
     // Initialize the read/end pointers
     pos:= buffer;
-    bend:= puint8(pos + section_length);
+    bend:= TWASMPUInt8(pos + section_length);
 
     // Initialize the function section
     ctx^.Sections.FunctionSection:= PWASMFunctionSection(kalloc(sizeof(TWASMFunctionSection)));

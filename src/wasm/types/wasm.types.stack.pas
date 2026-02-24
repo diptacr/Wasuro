@@ -3,30 +3,30 @@ unit wasm.types.stack;
 interface
 
 uses
-    types, lmemorymanager, console,
+    wasm.types.builtin, lmemorymanager, console,
     wasm.types;
 
 const
     DEFAULT_STACK_SIZE = $100000;
 
-function newStack(size : uint32) : PWASMStack;
+function newStack(size : TWASMUInt32) : PWASMStack;
 function newDefaultStack : PWASMStack;
 
-procedure pushi32(stack : PWASMStack; value : int32);
-procedure pushi64(stack : PWASMStack; value : int64);
-procedure pushf32(stack : PWASMStack; value : float);
-procedure pushf64(stack : PWASMStack; value : double);
+procedure pushi32(stack : PWASMStack; value : TWASMInt32);
+procedure pushi64(stack : PWASMStack; value : TWASMInt64);
+procedure pushf32(stack : PWASMStack; value : TWASMFloat);
+procedure pushf64(stack : PWASMStack; value : TWASMDouble);
 procedure pushv128(stack : PWASMStack; value : uint128);
-procedure pushfunc(stack : PWASMStack; value : uint32);
-procedure pushextn(stack : PWASMStack; value : uint32);
+procedure pushfunc(stack : PWASMStack; value : TWASMUInt32);
+procedure pushextn(stack : PWASMStack; value : TWASMUInt32);
 
-function popi32(stack : PWASMStack) : int32;
-function popi64(stack : PWASMStack) : int64;
-function popf32(stack : PWASMStack) : float;
-function popf64(stack : PWASMStack) : double;
+function popi32(stack : PWASMStack) : TWASMInt32;
+function popi64(stack : PWASMStack) : TWASMInt64;
+function popf32(stack : PWASMStack) : TWASMFloat;
+function popf64(stack : PWASMStack) : TWASMDouble;
 function popv128(stack : PWASMStack) : uint128;
-function popfunc(stack : PWASMStack) : uint32;
-function popextn(stack : PWASMStack) : uint32;
+function popfunc(stack : PWASMStack) : TWASMUInt32;
+function popextn(stack : PWASMStack) : TWASMUInt32;
 
 procedure walk(stack : PWASMStack);
 
@@ -52,7 +52,7 @@ begin
     end;
 end;
 
-function newStack(size: uint32): PWASMStack;
+function newStack(size: TWASMUInt32): PWASMStack;
 begin
     newStack:= PWASMStack(kalloc(sizeof(TWASMStack)));
     newStack^.Entries:= PWASMStackEntry(kalloc(size * sizeof(TWASMStackEntry)));
@@ -65,28 +65,28 @@ begin
     newDefaultStack:= newStack(DEFAULT_STACK_SIZE);
 end;
 
-procedure pushi32(stack: PWASMStack; value: int32);
+procedure pushi32(stack: PWASMStack; value: TWASMInt32);
 begin
     stack^.Entries[stack^.Top].ValueType:= vti32;
     stack^.Entries[stack^.Top].i32Value:= value;
     safeIncrement(stack);
 end;
 
-procedure pushi64(stack: PWASMStack; value: int64);
+procedure pushi64(stack: PWASMStack; value: TWASMInt64);
 begin
     stack^.Entries[stack^.Top].ValueType:= vti64;
     stack^.Entries[stack^.Top].i64Value:= value;
     safeIncrement(stack);
 end;
 
-procedure pushf32(stack: PWASMStack; value: float);
+procedure pushf32(stack: PWASMStack; value: TWASMFloat);
 begin
     stack^.Entries[stack^.Top].ValueType:= vtf32;
     stack^.Entries[stack^.Top].f32Value:= value;
     safeIncrement(stack);
 end;
 
-procedure pushf64(stack: PWASMStack; value: double);
+procedure pushf64(stack: PWASMStack; value: TWASMDouble);
 begin
     stack^.Entries[stack^.Top].ValueType:= vtf64;
     stack^.Entries[stack^.Top].f64Value:= value;
@@ -100,39 +100,39 @@ begin
     safeIncrement(stack);
 end;
 
-procedure pushfunc(stack: PWASMStack; value: uint32);
+procedure pushfunc(stack: PWASMStack; value: TWASMUInt32);
 begin
     stack^.Entries[stack^.Top].ValueType:= vtfunc;
     stack^.Entries[stack^.Top].funcValue:= value;
     safeIncrement(stack);
 end;
 
-procedure pushextn(stack: PWASMStack; value: uint32);
+procedure pushextn(stack: PWASMStack; value: TWASMUInt32);
 begin
     stack^.Entries[stack^.Top].ValueType:= vtextn;
     stack^.Entries[stack^.Top].extnValue:= value;
     safeIncrement(stack);
 end;
 
-function popi32(stack: PWASMStack): int32;
+function popi32(stack: PWASMStack): TWASMInt32;
 begin
     safeDecrement(stack);
     popi32:= stack^.Entries[stack^.Top].i32Value;
 end;
 
-function popi64(stack: PWASMStack): int64;
+function popi64(stack: PWASMStack): TWASMInt64;
 begin
     safeDecrement(stack);
     popi64:= stack^.Entries[stack^.Top].i64Value;
 end;
 
-function popf32(stack: PWASMStack): float;
+function popf32(stack: PWASMStack): TWASMFloat;
 begin
     safeDecrement(stack);
     popf32:= stack^.Entries[stack^.Top].f32Value;
 end;
 
-function popf64(stack: PWASMStack): double;
+function popf64(stack: PWASMStack): TWASMDouble;
 begin
     safeDecrement(stack);
     popf64:= stack^.Entries[stack^.Top].f64Value;
@@ -144,13 +144,13 @@ begin
     popv128:= stack^.Entries[stack^.Top].v128Value;
 end;
 
-function popfunc(stack: PWASMStack): uint32;
+function popfunc(stack: PWASMStack): TWASMUInt32;
 begin
     safeDecrement(stack);
     popfunc:= stack^.Entries[stack^.Top].funcValue;
 end;
 
-function popextn(stack: PWASMStack): uint32;
+function popextn(stack: PWASMStack): TWASMUInt32;
 begin
     safeDecrement(stack);
     popextn:= stack^.Entries[stack^.Top].extnValue;
@@ -158,7 +158,7 @@ end;
 
 procedure walk(stack : PWASMStack);
 var
-    i : uint32;
+    i : TWASMUInt32;
 
 begin
     // Walk the stack

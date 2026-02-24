@@ -7,13 +7,13 @@ procedure run;
 implementation
 
 uses
-    types, lmemorymanager,
+    wasm.types.builtin, lmemorymanager,
     wasm.types, wasm.test.framework,
     wasm.parser.sections.globalSection;
 
 procedure run;
 var
-    buf : array[0..5] of uint8;
+    buf : array[0..5] of TWASMUInt8;
     ctx : PWASMProcessContext;
 begin
     test_begin('parser.global');
@@ -34,7 +34,7 @@ begin
     wasm.parser.sections.globalSection.handle(@buf[0], 6, ctx);
 
     assert_u32('GlobalCount=1', ctx^.ExecutionState.Globals^.GlobalCount, 1);
-    assert_u32('Globals[0].ValueType=vti32', uint32(ctx^.ExecutionState.Globals^.Globals[0].ValueType), uint32(vti32));
+    assert_u32('Globals[0].ValueType=vti32', TWASMUInt32(ctx^.ExecutionState.Globals^.Globals[0].ValueType), TWASMUInt32(vti32));
     assert_bool('Globals[0].Mutable=true', ctx^.ExecutionState.Globals^.Globals[0].Mutable, true);
     assert_i32('Globals[0].Value.i32Value=42', ctx^.ExecutionState.Globals^.Globals[0].Value.i32Value, 42);
 

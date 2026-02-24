@@ -3,13 +3,13 @@ unit wasm.vm;
 interface
 
 uses
-    types, lmemorymanager, console,
+    wasm.types.builtin, lmemorymanager, console,
 
     wasm.types,
     wasm.vm.opcodes;
 
 procedure init();
-function tick(Context : PWASMProcessContext) : Boolean;
+function tick(Context : PWASMProcessContext) : TWASMBoolean;
 
 implementation
 
@@ -27,7 +27,7 @@ begin
      initializeOpcodeJumpTable(@OpcodeJumpTable[0]);
 end;
 
-function tick(Context : PWASMProcessContext) : Boolean;
+function tick(Context : PWASMProcessContext) : TWASMBoolean;
 begin
      if Context^.ExecutionState.Running then
         if Context^.ExecutionState.IP < Context^.ExecutionState.Limit then

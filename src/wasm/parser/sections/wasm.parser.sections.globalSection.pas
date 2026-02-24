@@ -3,16 +3,16 @@ unit wasm.parser.sections.globalSection;
 interface
 
 uses
-    types, lmemorymanager, console, leb128,
+    wasm.types.builtin, lmemorymanager, console, leb128,
     wasm.types;
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 
 implementation
 
 procedure walk(ctx : PWASMProcessContext);
 var
-   i : uint32;
+   i : TWASMUInt32;
    entry : PWASMGlobalEntry;
 begin
     for i := 0 to ctx^.ExecutionState.Globals^.GlobalCount - 1 do begin
@@ -35,25 +35,25 @@ begin
     end;
 end;
 
-procedure handle(buffer: puint8; section_length: uint32; ctx: PWASMProcessContext);
+procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 var
-   pos, bend : puint8;
-   bytesRead : uint8;
-   globalCount : uint32;
-   i : uint32;
+   pos, bend : TWASMPUInt8;
+   bytesRead : TWASMUInt8;
+   globalCount : TWASMUInt32;
+   i : TWASMUInt32;
    entry : PWASMGlobalEntry;
-   valType : uint8;
-   mutFlag : uint8;
-   opcode : uint8;
-   tmpU32 : uint32;
-   tmpU64 : uint64;
+   valType : TWASMUInt8;
+   mutFlag : TWASMUInt8;
+   opcode : TWASMUInt8;
+   tmpU32 : TWASMUInt32;
+   tmpU64 : TWASMUInt64;
 
 begin
     writestring('[wasm.parser] Handle Section: Global - Size: ');
     writeintlnWND(section_length, 0);
 
     pos := buffer;
-    bend := puint8(buffer + section_length);
+    bend := TWASMPUInt8(buffer + section_length);
 
     { Read global count }
     bytesRead := read_leb128_to_uint32(pos, bend, @globalCount);
@@ -88,19 +88,19 @@ begin
             $41: begin { i32.const }
                 bytesRead := read_leb128_to_uint32(pos, bend, @tmpU32);
                 Inc(pos, bytesRead);
-                entry^.Value.i32Value := int32(tmpU32);
+                entry^.Value.i32Value := TWASMInt32(tmpU32);
             end;
             $42: begin { i64.const }
                 bytesRead := read_leb128_to_uint64(pos, bend, @tmpU64);
                 Inc(pos, bytesRead);
-                entry^.Value.i64Value := int64(tmpU64);
+                entry^.Value.i64Value := TWASMInt64(tmpU64);
             end;
             $43: begin { f32.const }
-                entry^.Value.f32Value := pfloat(pos)^;
+                entry^.Value.f32Value := TWASMPFloat(pos)^;
                 Inc(pos, 4);
             end;
             $44: begin { f64.const }
-                entry^.Value.f64Value := pdouble(pos)^;
+                entry^.Value.f64Value := TWASMPDouble(pos)^;
                 Inc(pos, 8);
             end;
         else
