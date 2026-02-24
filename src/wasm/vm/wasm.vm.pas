@@ -5,7 +5,7 @@ interface
 uses
     wasm.types.builtin, lmemorymanager, console,
 
-    wasm.types,
+    wasm.types.context,
     wasm.vm.opcodes;
 
 procedure init();

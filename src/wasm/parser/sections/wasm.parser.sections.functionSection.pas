@@ -4,7 +4,7 @@ interface
 
 uses
     wasm.types.builtin, lmemorymanager, console, leb128,
-    wasm.types;
+    wasm.types.sections, wasm.types.context;
 
 procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
 

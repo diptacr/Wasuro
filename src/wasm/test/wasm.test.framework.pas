@@ -4,7 +4,7 @@ interface
 
 uses
     wasm.types.builtin, lmemorymanager, console,
-    wasm.types, wasm.types.heap, wasm.types.stack;
+    wasm.types.enums, wasm.types.values, wasm.types.sections, wasm.types.context, wasm.types.heap, wasm.types.stack;
 
 var
     TotalTests  : TWASMUInt32;

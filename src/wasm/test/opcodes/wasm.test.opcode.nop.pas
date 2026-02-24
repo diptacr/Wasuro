@@ -7,7 +7,7 @@ procedure run;
 implementation
 
 uses
-    wasm.types.builtin, wasm.types, wasm.vm, wasm.test.framework;
+    wasm.types.builtin, wasm.types.context, wasm.vm, wasm.test.framework;
 
 procedure run;
 var
