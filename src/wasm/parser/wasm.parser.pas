@@ -39,6 +39,13 @@ begin
     ctx^.Sections.FunctionSection:= nil;
     ctx^.Sections.ExportSection:= nil;
     ctx^.Sections.CodeSection:= nil;
+    ctx^.Sections.MemorySection:= nil;
+    ctx^.Sections.StartIndex:= -1;
+
+    // Initialize globals (empty until global section is parsed)
+    ctx^.ExecutionState.Globals:= PWASMGlobals(kalloc(sizeof(TWASMGlobals)));
+    ctx^.ExecutionState.Globals^.GlobalCount:= 0;
+    ctx^.ExecutionState.Globals^.Globals:= nil;
 
     newContext:= ctx;
 end;

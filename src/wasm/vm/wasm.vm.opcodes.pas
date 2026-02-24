@@ -3,7 +3,7 @@ unit wasm.vm.opcodes;
 interface
 
 uses
-    console, leb128,
+    console, leb128, types,
     wasm.types, wasm.types.heap, wasm.types.stack;
 
 procedure initializeOpcodeJumpTable(Table : PWASMOpcodeJumpTable);
@@ -12,12 +12,13 @@ implementation
 
 procedure _WASM_opcode_UnreachableOp(Context : PWASMProcessContext);
 begin
-     console.writestringln('[wasm.vm.opcodes] UnreachableOp not implemented!');
+     console.writestringln('[wasm.vm.opcodes] Trap: unreachable executed!');
+     Context^.ExecutionState.Running := false;
 end;
 
 procedure _WASM_opcode_NopOp(Context : PWASMProcessContext);
 begin
-     console.writestringln('[wasm.vm.opcodes] NopOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
 end;
 
 procedure _WASM_opcode_BlockOp(Context : PWASMProcessContext);
@@ -84,162 +85,534 @@ end;
 
 procedure _WASM_opcode_DropOp(Context : PWASMProcessContext);
 begin
-     console.writestringln('[wasm.vm.opcodes] DropOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     if Context^.ExecutionState.Operand_Stack^.Top > 0 then
+        Dec(Context^.ExecutionState.Operand_Stack^.Top)
+     else begin
+        console.writestringln('[wasm.vm.opcodes.dropop] Stack underflow!');
+        Context^.ExecutionState.Running := false;
+     end;
 end;
 
 procedure _WASM_opcode_SelectOp(Context : PWASMProcessContext);
+var
+     cond : int32;
+     val2_idx, val1_idx : uint32;
 begin
-     console.writestringln('[wasm.vm.opcodes] SelectOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     cond := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     { After popping cond, Top points past val2. val2 is at Top-1, val1 at Top-2. }
+     val2_idx := Context^.ExecutionState.Operand_Stack^.Top - 1;
+     val1_idx := Context^.ExecutionState.Operand_Stack^.Top - 2;
+     { Pop both val2 and val1 }
+     Dec(Context^.ExecutionState.Operand_Stack^.Top, 2);
+     if cond <> 0 then begin
+        { push val1 }
+        Context^.ExecutionState.Operand_Stack^.Entries[Context^.ExecutionState.Operand_Stack^.Top] := Context^.ExecutionState.Operand_Stack^.Entries[val1_idx];
+     end else begin
+        { push val2 }
+        Context^.ExecutionState.Operand_Stack^.Entries[Context^.ExecutionState.Operand_Stack^.Top] := Context^.ExecutionState.Operand_Stack^.Entries[val2_idx];
+     end;
+     Inc(Context^.ExecutionState.Operand_Stack^.Top);
 end;
 
 procedure _WASM_opcode_LocalGetOp(Context : PWASMProcessContext);
+var idx : uint32; bytesRead : uint8; entry : PWASMValueEntry;
 begin
-     console.writestringln('[wasm.vm.opcodes] LocalGetOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @idx);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     entry := @Context^.ExecutionState.Locals^.Locals[idx];
+     case entry^.ValueType of
+        vti32: wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, entry^.i32Value);
+        vti64: wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, entry^.i64Value);
+        vtf32: wasm.types.stack.pushf32(Context^.ExecutionState.Operand_Stack, entry^.f32Value);
+        vtf64: wasm.types.stack.pushf64(Context^.ExecutionState.Operand_Stack, entry^.f64Value);
+     else begin
+        console.writestringln('[wasm.vm.opcodes.localget] Unknown local type!');
+        Context^.ExecutionState.Running := false;
+     end;
+     end;
 end;
 
 procedure _WASM_opcode_LocalSetOp(Context : PWASMProcessContext);
+var idx : uint32; bytesRead : uint8; entry : PWASMValueEntry;
 begin
-     console.writestringln('[wasm.vm.opcodes] LocalSetOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @idx);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     entry := @Context^.ExecutionState.Locals^.Locals[idx];
+     case entry^.ValueType of
+        vti32: entry^.i32Value := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+        vti64: entry^.i64Value := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+        vtf32: entry^.f32Value := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+        vtf64: entry^.f64Value := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
+     else begin
+        console.writestringln('[wasm.vm.opcodes.localset] Unknown local type!');
+        Context^.ExecutionState.Running := false;
+     end;
+     end;
 end;
 
 procedure _WASM_opcode_LocalTeeOp(Context : PWASMProcessContext);
+var idx : uint32; bytesRead : uint8; entry : PWASMValueEntry;
 begin
-     console.writestringln('[wasm.vm.opcodes] LocalTeeOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @idx);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     entry := @Context^.ExecutionState.Locals^.Locals[idx];
+     { tee = set local but keep value on stack (peek then set) }
+     case entry^.ValueType of
+        vti32: entry^.i32Value := Context^.ExecutionState.Operand_Stack^.Entries[Context^.ExecutionState.Operand_Stack^.Top - 1].i32Value;
+        vti64: entry^.i64Value := Context^.ExecutionState.Operand_Stack^.Entries[Context^.ExecutionState.Operand_Stack^.Top - 1].i64Value;
+        vtf32: entry^.f32Value := Context^.ExecutionState.Operand_Stack^.Entries[Context^.ExecutionState.Operand_Stack^.Top - 1].f32Value;
+        vtf64: entry^.f64Value := Context^.ExecutionState.Operand_Stack^.Entries[Context^.ExecutionState.Operand_Stack^.Top - 1].f64Value;
+     else begin
+        console.writestringln('[wasm.vm.opcodes.localtee] Unknown local type!');
+        Context^.ExecutionState.Running := false;
+     end;
+     end;
 end;
 
 procedure _WASM_opcode_GlobalGetOp(Context : PWASMProcessContext);
+var idx : uint32; bytesRead : uint8; entry : PWASMGlobalEntry;
 begin
-     console.writestringln('[wasm.vm.opcodes] GlobalGetOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @idx);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     entry := @Context^.ExecutionState.Globals^.Globals[idx];
+     case entry^.ValueType of
+        vti32: wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, entry^.Value.i32Value);
+        vti64: wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, entry^.Value.i64Value);
+        vtf32: wasm.types.stack.pushf32(Context^.ExecutionState.Operand_Stack, entry^.Value.f32Value);
+        vtf64: wasm.types.stack.pushf64(Context^.ExecutionState.Operand_Stack, entry^.Value.f64Value);
+     else begin
+        console.writestringln('[wasm.vm.opcodes.globalget] Unknown global type!');
+        Context^.ExecutionState.Running := false;
+     end;
+     end;
 end;
 
 procedure _WASM_opcode_GlobalSetOp(Context : PWASMProcessContext);
+var idx : uint32; bytesRead : uint8; entry : PWASMGlobalEntry;
 begin
-     console.writestringln('[wasm.vm.opcodes] GlobalSetOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @idx);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     entry := @Context^.ExecutionState.Globals^.Globals[idx];
+     if not entry^.Mutable then begin
+        console.writestringln('[wasm.vm.opcodes.globalset] Trap: attempt to set immutable global!');
+        Context^.ExecutionState.Running := false;
+     end else begin
+        case entry^.ValueType of
+           vti32: entry^.Value.i32Value := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+           vti64: entry^.Value.i64Value := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+           vtf32: entry^.Value.f32Value := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+           vtf64: entry^.Value.f64Value := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
+        else begin
+           console.writestringln('[wasm.vm.opcodes.globalset] Unknown global type!');
+           Context^.ExecutionState.Running := false;
+        end;
+        end;
+     end;
 end;
 
 procedure _WASM_opcode_I32LoadOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; result_val : uint32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32LoadOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.read_uint32(addr, Context^.ExecutionState.Memory, @result_val) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i32.load out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, int32(result_val));
 end;
 
 procedure _WASM_opcode_I64LoadOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; result_val : uint64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64LoadOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.read_uint64(addr, Context^.ExecutionState.Memory, @result_val) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.load out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, int64(result_val));
 end;
 
 procedure _WASM_opcode_F32LoadOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; result_val : uint32;
 begin
-     console.writestringln('[wasm.vm.opcodes] F32LoadOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.read_uint32(addr, Context^.ExecutionState.Memory, @result_val) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: f32.load out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushf32(Context^.ExecutionState.Operand_Stack, pfloat(@result_val)^);
 end;
 
 procedure _WASM_opcode_F64LoadOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; result_val : uint64;
 begin
-     console.writestringln('[wasm.vm.opcodes] F64LoadOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.read_uint64(addr, Context^.ExecutionState.Memory, @result_val) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: f64.load out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushf64(Context^.ExecutionState.Operand_Stack, pdouble(@result_val)^);
 end;
 
 procedure _WASM_opcode_I32Load8SOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; result_val : uint8;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32Load8SOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.read_uint8(addr, Context^.ExecutionState.Memory, @result_val) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i32.load8_s out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, int32(sint8(result_val)));
 end;
 
 procedure _WASM_opcode_I32Load8UOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; result_val : uint8;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32Load8UOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.read_uint8(addr, Context^.ExecutionState.Memory, @result_val) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i32.load8_u out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, int32(result_val));
 end;
 
 procedure _WASM_opcode_I32Load16SOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; result_val : uint16;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32Load16SOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.read_uint16(addr, Context^.ExecutionState.Memory, @result_val) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i32.load16_s out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, int32(sint16(result_val)));
 end;
 
 procedure _WASM_opcode_I32Load16UOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; result_val : uint16;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32Load16UOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.read_uint16(addr, Context^.ExecutionState.Memory, @result_val) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i32.load16_u out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, int32(result_val));
 end;
 
 procedure _WASM_opcode_I64Load8SOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; result_val : uint8;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64Load8SOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.read_uint8(addr, Context^.ExecutionState.Memory, @result_val) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.load8_s out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, int64(sint8(result_val)));
 end;
 
 procedure _WASM_opcode_I64Load8UOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; result_val : uint8;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64Load8UOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.read_uint8(addr, Context^.ExecutionState.Memory, @result_val) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.load8_u out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, int64(result_val));
 end;
 
 procedure _WASM_opcode_I64Load16SOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; result_val : uint16;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64Load16SOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.read_uint16(addr, Context^.ExecutionState.Memory, @result_val) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.load16_s out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, int64(sint16(result_val)));
 end;
 
 procedure _WASM_opcode_I64Load16UOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; result_val : uint16;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64Load16UOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.read_uint16(addr, Context^.ExecutionState.Memory, @result_val) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.load16_u out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, int64(result_val));
 end;
 
 procedure _WASM_opcode_I64Load32SOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; result_val : uint32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64Load32SOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.read_uint32(addr, Context^.ExecutionState.Memory, @result_val) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.load32_s out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, int64(int32(result_val)));
 end;
 
 procedure _WASM_opcode_I64Load32UOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; result_val : uint32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64Load32UOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.read_uint32(addr, Context^.ExecutionState.Memory, @result_val) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.load32_u out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, int64(result_val));
 end;
 
 procedure _WASM_opcode_I32StoreOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; val : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32StoreOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     val := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.write_uint32(addr, Context^.ExecutionState.Memory, uint32(val)) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i32.store out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end;
 end;
 
 procedure _WASM_opcode_I64StoreOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; val : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64StoreOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     val := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.write_uint64(addr, Context^.ExecutionState.Memory, uint64(val)) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.store out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end;
 end;
 
 procedure _WASM_opcode_F32StoreOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; val : float;
 begin
-     console.writestringln('[wasm.vm.opcodes] F32StoreOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     val := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.write_uint32(addr, Context^.ExecutionState.Memory, puint32(@val)^) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: f32.store out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end;
 end;
 
 procedure _WASM_opcode_F64StoreOp(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; val : double;
 begin
-     console.writestringln('[wasm.vm.opcodes] F64StoreOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     val := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.write_uint64(addr, Context^.ExecutionState.Memory, puint64(@val)^) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: f64.store out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end;
 end;
 
 procedure _WASM_opcode_I32Store8Op(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; val : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32Store8Op not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     val := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.write_uint8(addr, Context^.ExecutionState.Memory, uint8(val)) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i32.store8 out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end;
 end;
 
 procedure _WASM_opcode_I32Store16Op(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; val : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32Store16Op not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     val := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.write_uint16(addr, Context^.ExecutionState.Memory, uint16(val)) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i32.store16 out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end;
 end;
 
 procedure _WASM_opcode_I64Store8Op(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; val : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64Store8Op not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     val := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.write_uint8(addr, Context^.ExecutionState.Memory, uint8(val)) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.store8 out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end;
 end;
 
 procedure _WASM_opcode_I64Store16Op(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; val : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64Store16Op not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     val := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.write_uint16(addr, Context^.ExecutionState.Memory, uint16(val)) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.store16 out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end;
 end;
 
 procedure _WASM_opcode_I64Store32Op(Context : PWASMProcessContext);
+var align_val, offset_val : uint32; bytesRead : uint8; addr : uint32; val : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64Store32Op not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @align_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @offset_val);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     val := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     addr := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
+     if not wasm.types.heap.write_uint32(addr, Context^.ExecutionState.Memory, uint32(val)) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.store32 out of bounds!');
+        Context^.ExecutionState.Running := false;
+     end;
 end;
 
 procedure _WASM_opcode_MemorySizeOp(Context : PWASMProcessContext);
+var reserved : uint32; bytesRead : uint8;
 begin
-     console.writestringln('[wasm.vm.opcodes] MemorySizeOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     { memory index immediate (reserved, must be 0) }
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @reserved);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, int32(Context^.ExecutionState.Memory^.PageCount));
 end;
 
 procedure _WASM_opcode_MemoryGrowOp(Context : PWASMProcessContext);
+var reserved : uint32; bytesRead : uint8; pages_to_grow, old_size : uint32; i : uint32;
 begin
-     console.writestringln('[wasm.vm.opcodes] MemoryGrowOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     { memory index immediate (reserved, must be 0) }
+     bytesRead := read_leb128_to_uint32(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @reserved);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     pages_to_grow := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack));
+     old_size := Context^.ExecutionState.Memory^.PageCount;
+     if pages_to_grow > 0 then begin
+        for i := 0 to pages_to_grow - 1 do begin
+           if not wasm.types.heap.expand_heap(Context^.ExecutionState.Memory) then begin
+              wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, -1);
+              exit;
+           end;
+        end;
+     end;
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, int32(old_size));
 end;
 
 procedure _WASM_opcode_I32ConstOp(Context : PWASMProcessContext);
@@ -259,368 +632,850 @@ begin
 end;
 
 procedure _WASM_opcode_I64ConstOp(Context : PWASMProcessContext);
+var
+     bytesRead : uint8;
+     value : uint64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64ConstOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     bytesRead := read_leb128_to_uint64(@Context^.ExecutionState.Code[Context^.ExecutionState.IP], puint8(Context^.ExecutionState.Code + Context^.ExecutionState.Limit), @value);
+     Inc(Context^.ExecutionState.IP, bytesRead);
+     wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, int64(value));
 end;
 
 procedure _WASM_opcode_F32ConstOp(Context : PWASMProcessContext);
+var
+     value : float;
 begin
-     console.writestringln('[wasm.vm.opcodes] F32ConstOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     value := pfloat(@Context^.ExecutionState.Code[Context^.ExecutionState.IP])^;
+     Inc(Context^.ExecutionState.IP, 4);
+     wasm.types.stack.pushf32(Context^.ExecutionState.Operand_Stack, value);
 end;
 
 procedure _WASM_opcode_F64ConstOp(Context : PWASMProcessContext);
+var
+     value : double;
 begin
-     console.writestringln('[wasm.vm.opcodes] F64ConstOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     value := pdouble(@Context^.ExecutionState.Code[Context^.ExecutionState.IP])^;
+     Inc(Context^.ExecutionState.IP, 8);
+     wasm.types.stack.pushf64(Context^.ExecutionState.Operand_Stack, value);
 end;
 
 procedure _WASM_opcode_I32EqzOp(Context : PWASMProcessContext);
+var a : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32EqzOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if a = 0 then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I32EqOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32EqOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if a = b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I32NeOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32NeOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if a <> b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I32LtSOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32LtSOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if a < b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I32LtUOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32LtUOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if uint32(a) < uint32(b) then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I32GtSOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32GtSOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if a > b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I32GtUOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32GtUOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if uint32(a) > uint32(b) then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I32LeSOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32LeSOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if a <= b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I32LeUOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32LeUOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if uint32(a) <= uint32(b) then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I32GeSOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32GeSOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if a >= b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I32GeUOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32GeUOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if uint32(a) >= uint32(b) then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I64EqzOp(Context : PWASMProcessContext);
+var a : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64EqzOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     if a = 0 then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I64EqOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64EqOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     if a = b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I64NeOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64NeOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     if a <> b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I64LtSOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64LtSOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     if a < b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I64LtUOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64LtUOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     if uint64(a) < uint64(b) then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I64GtSOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64GtSOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     if a > b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I64GtUOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64GtUOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     if uint64(a) > uint64(b) then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I64LeSOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64LeSOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     if a <= b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I64LeUOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64LeUOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     if uint64(a) <= uint64(b) then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I64GeSOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64GeSOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     if a >= b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I64GeUOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64GeUOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     if uint64(a) >= uint64(b) then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_F32EqOp(Context : PWASMProcessContext);
+var a, b : float;
 begin
-     console.writestringln('[wasm.vm.opcodes] F32EqOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+     if a = b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_F32NeOp(Context : PWASMProcessContext);
+var a, b : float;
 begin
-     console.writestringln('[wasm.vm.opcodes] F32NeOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+     if a <> b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_F32LtOp(Context : PWASMProcessContext);
+var a, b : float;
 begin
-     console.writestringln('[wasm.vm.opcodes] F32LtOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+     if a < b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_F32GtOp(Context : PWASMProcessContext);
+var a, b : float;
 begin
-     console.writestringln('[wasm.vm.opcodes] F32GtOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+     if a > b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_F32LeOp(Context : PWASMProcessContext);
+var a, b : float;
 begin
-     console.writestringln('[wasm.vm.opcodes] F32LeOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+     if a <= b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_F32GeOp(Context : PWASMProcessContext);
+var a, b : float;
 begin
-     console.writestringln('[wasm.vm.opcodes] F32GeOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
+     if a >= b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_F64EqOp(Context : PWASMProcessContext);
+var a, b : double;
 begin
-     console.writestringln('[wasm.vm.opcodes] F64EqOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
+     if a = b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_F64NeOp(Context : PWASMProcessContext);
+var a, b : double;
 begin
-     console.writestringln('[wasm.vm.opcodes] F64NeOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
+     if a <> b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_F64LtOp(Context : PWASMProcessContext);
+var a, b : double;
 begin
-     console.writestringln('[wasm.vm.opcodes] F64LtOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
+     if a < b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_F64GtOp(Context : PWASMProcessContext);
+var a, b : double;
 begin
-     console.writestringln('[wasm.vm.opcodes] F64GtOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
+     if a > b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_F64LeOp(Context : PWASMProcessContext);
+var a, b : double;
 begin
-     console.writestringln('[wasm.vm.opcodes] F64LeOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
+     if a <= b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_F64GeOp(Context : PWASMProcessContext);
+var a, b : double;
 begin
-     console.writestringln('[wasm.vm.opcodes] F64GeOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
+     if a >= b then
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 1)
+     else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, 0);
 end;
 
 procedure _WASM_opcode_I32ClzOp(Context : PWASMProcessContext);
+var a : uint32; count : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32ClzOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     a := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack));
+     if a = 0 then count := 32
+     else begin
+        count := 0;
+        while (a and $80000000) = 0 do begin
+           Inc(count);
+           a := a shl 1;
+        end;
+     end;
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, count);
 end;
 
 procedure _WASM_opcode_I32CtzOp(Context : PWASMProcessContext);
+var a : uint32; count : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32CtzOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     a := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack));
+     if a = 0 then count := 32
+     else begin
+        count := 0;
+        while (a and 1) = 0 do begin
+           Inc(count);
+           a := a shr 1;
+        end;
+     end;
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, count);
 end;
 
 procedure _WASM_opcode_I32PopcntOp(Context : PWASMProcessContext);
+var a : uint32; count : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32PopcntOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     a := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack));
+     count := 0;
+     while a <> 0 do begin
+        Inc(count, int32(a and 1));
+        a := a shr 1;
+     end;
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, count);
 end;
 
 procedure _WASM_opcode_I32AddOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32AddOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, a + b);
 end;
 
 procedure _WASM_opcode_I32SubOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32SubOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, a - b);
 end;
 
 procedure _WASM_opcode_I32MulOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32MulOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, a * b);
 end;
 
 procedure _WASM_opcode_I32DivSOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32DivSOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if b = 0 then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i32.div_s division by zero!');
+        Context^.ExecutionState.Running := false;
+     end else if (a = int32($80000000)) and (b = -1) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i32.div_s overflow!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, a div b);
 end;
 
 procedure _WASM_opcode_I32DivUOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32DivUOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if b = 0 then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i32.div_u division by zero!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, int32(uint32(a) div uint32(b)));
 end;
 
 procedure _WASM_opcode_I32RemSOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32RemSOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if b = 0 then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i32.rem_s division by zero!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, a mod b);
 end;
 
 procedure _WASM_opcode_I32RemUOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32RemUOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     if b = 0 then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i32.rem_u division by zero!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, int32(uint32(a) mod uint32(b)));
 end;
 
 procedure _WASM_opcode_I32AndOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32AndOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, a and b);
 end;
 
 procedure _WASM_opcode_I32OrOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32OrOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, a or b);
 end;
 
 procedure _WASM_opcode_I32XorOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32XorOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, a xor b);
 end;
 
 procedure _WASM_opcode_I32ShlOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32ShlOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, int32(uint32(a) shl (uint32(b) and 31)));
 end;
 
 procedure _WASM_opcode_I32ShrSOp(Context : PWASMProcessContext);
+var a, b : int32; shift : uint32; res : uint32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32ShrSOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     shift := uint32(b) and 31;
+     res := uint32(a) shr shift;
+     if (a < 0) and (shift > 0) then
+        res := res or (uint32($FFFFFFFF) shl (32 - shift));
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, int32(res));
 end;
 
 procedure _WASM_opcode_I32ShrUOp(Context : PWASMProcessContext);
+var a, b : int32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32ShrUOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, int32(uint32(a) shr (uint32(b) and 31)));
 end;
 
 procedure _WASM_opcode_I32RotlOp(Context : PWASMProcessContext);
+var a : uint32; b : uint32; k : uint32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32RotlOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack));
+     a := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack));
+     k := b and 31;
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, int32((a shl k) or (a shr (32 - k))));
 end;
 
 procedure _WASM_opcode_I32RotrOp(Context : PWASMProcessContext);
+var a : uint32; b : uint32; k : uint32;
 begin
-     console.writestringln('[wasm.vm.opcodes] I32RotrOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack));
+     a := uint32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack));
+     k := b and 31;
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, int32((a shr k) or (a shl (32 - k))));
 end;
 
 procedure _WASM_opcode_I64ClzOp(Context : PWASMProcessContext);
+var a : uint64; count : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64ClzOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     a := uint64(wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack));
+     if a = 0 then count := 64
+     else begin
+        count := 0;
+        while (a and uint64($8000000000000000)) = 0 do begin
+           Inc(count);
+           a := a shl 1;
+        end;
+     end;
+     wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, count);
 end;
 
 procedure _WASM_opcode_I64CtzOp(Context : PWASMProcessContext);
+var a : uint64; count : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64CtzOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     a := uint64(wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack));
+     if a = 0 then count := 64
+     else begin
+        count := 0;
+        while (a and 1) = 0 do begin
+           Inc(count);
+           a := a shr 1;
+        end;
+     end;
+     wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, count);
 end;
 
 procedure _WASM_opcode_I64PopcntOp(Context : PWASMProcessContext);
+var a : uint64; count : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64PopcntOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     a := uint64(wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack));
+     count := 0;
+     while a <> 0 do begin
+        Inc(count, int64(a and 1));
+        a := a shr 1;
+     end;
+     wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, count);
 end;
 
 procedure _WASM_opcode_I64AddOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64AddOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, a + b);
 end;
 
 procedure _WASM_opcode_I64SubOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64SubOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, a - b);
 end;
 
 procedure _WASM_opcode_I64MulOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64MulOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, a * b);
 end;
 
 procedure _WASM_opcode_I64DivSOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64DivSOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     if b = 0 then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.div_s division by zero!');
+        Context^.ExecutionState.Running := false;
+     end else if (a = int64($8000000000000000)) and (b = -1) then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.div_s overflow!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, a div b);
 end;
 
 procedure _WASM_opcode_I64DivUOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64DivUOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     if b = 0 then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.div_u division by zero!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, int64(uint64(a) div uint64(b)));
 end;
 
 procedure _WASM_opcode_I64RemSOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64RemSOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     if b = 0 then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.rem_s division by zero!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, a mod b);
 end;
 
 procedure _WASM_opcode_I64RemUOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64RemUOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     if b = 0 then begin
+        console.writestringln('[wasm.vm.opcodes] Trap: i64.rem_u division by zero!');
+        Context^.ExecutionState.Running := false;
+     end else
+        wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, int64(uint64(a) mod uint64(b)));
 end;
 
 procedure _WASM_opcode_I64AndOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64AndOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, a and b);
 end;
 
 procedure _WASM_opcode_I64OrOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64OrOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, a or b);
 end;
 
 procedure _WASM_opcode_I64XorOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64XorOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, a xor b);
 end;
 
 procedure _WASM_opcode_I64ShlOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64ShlOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, int64(uint64(a) shl (uint64(b) and 63)));
 end;
 
 procedure _WASM_opcode_I64ShrSOp(Context : PWASMProcessContext);
+var a, b : int64; shift : uint64; res : uint64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64ShrSOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     shift := uint64(b) and 63;
+     res := uint64(a) shr shift;
+     if (a < 0) and (shift > 0) then
+        res := res or (uint64($FFFFFFFFFFFFFFFF) shl (64 - shift));
+     wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, int64(res));
 end;
 
 procedure _WASM_opcode_I64ShrUOp(Context : PWASMProcessContext);
+var a, b : int64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64ShrUOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     a := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
+     wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, int64(uint64(a) shr (uint64(b) and 63)));
 end;
 
 procedure _WASM_opcode_I64RotlOp(Context : PWASMProcessContext);
+var a, b, k : uint64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64RotlOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := uint64(wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack));
+     a := uint64(wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack));
+     k := b and 63;
+     wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, int64((a shl k) or (a shr (64 - k))));
 end;
 
 procedure _WASM_opcode_I64RotrOp(Context : PWASMProcessContext);
+var a, b, k : uint64;
 begin
-     console.writestringln('[wasm.vm.opcodes] I64RotrOp not implemented!');
+     Inc(Context^.ExecutionState.IP);
+     b := uint64(wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack));
+     a := uint64(wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack));
+     k := b and 63;
+     wasm.types.stack.pushi64(Context^.ExecutionState.Operand_Stack, int64((a shr k) or (a shl (64 - k))));
 end;
 
 procedure initializeOpcodeJumpTable(Table: PWASMOpcodeJumpTable);
