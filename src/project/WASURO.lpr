@@ -10,12 +10,22 @@ uses
     wasm.types,
     wasm.parser,
     wasm.vm, wasm.test.binary,
-    wasm.types.stack;
+    wasm.types.stack
+    {$IFDEF RUN_TESTS}
+    , wasm.test
+    , wasm.test.framework
+    {$ENDIF}
+    ;
 
 var
    Context : PWASMProcessContext;
 
 begin
+    {$IFDEF RUN_TESTS}
+    wasm.vm.init();
+    wasm.test.run_all_tests;
+    halt(wasm.test.framework.FailedTests);
+    {$ELSE}
     writestringln('[main] Initializing VM');
     wasm.vm.init();
 
@@ -32,5 +42,6 @@ begin
     end;
     writeln();
     while true do sleep(1000);
+    {$ENDIF}
 end.
 

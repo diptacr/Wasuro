@@ -1,0 +1,52 @@
+unit wasm.test.opcode.i64divs;
+
+interface
+
+procedure run;
+
+implementation
+
+uses
+    types, wasm.types, wasm.types.stack, wasm.vm, wasm.test.framework;
+
+procedure run;
+var
+    code : array[0..0] of uint8;
+    ctx : PWASMProcessContext;
+begin
+    test_begin('opcode.i64.div_s');
+
+    code[0] := $7F;
+    ctx := make_test_context(@code[0], 1);
+    pushi64(ctx^.ExecutionState.Operand_Stack, 10);
+    pushi64(ctx^.ExecutionState.Operand_Stack, 3);
+    wasm.vm.tick(ctx);
+    assert_i64('10/3=3', popi64(ctx^.ExecutionState.Operand_Stack), 3);
+
+    code[0] := $7F;
+    ctx := make_test_context(@code[0], 1);
+    pushi64(ctx^.ExecutionState.Operand_Stack, -7);
+    pushi64(ctx^.ExecutionState.Operand_Stack, 2);
+    wasm.vm.tick(ctx);
+    assert_i64('-7/2=-3', popi64(ctx^.ExecutionState.Operand_Stack), -3);
+
+    { Edge: division by zero traps }
+    code[0] := $7F;
+    ctx := make_test_context(@code[0], 1);
+    pushi64(ctx^.ExecutionState.Operand_Stack, 1);
+    pushi64(ctx^.ExecutionState.Operand_Stack, 0);
+    wasm.vm.tick(ctx);
+    assert_bool('div by zero traps', ctx^.ExecutionState.Running, false);
+
+    { Edge: INT64_MIN / -1 traps (overflow) }
+    code[0] := $7F;
+    ctx := make_test_context(@code[0], 1);
+    pushi64(ctx^.ExecutionState.Operand_Stack, int64($8000000000000000));
+    pushi64(ctx^.ExecutionState.Operand_Stack, -1);
+    wasm.vm.tick(ctx);
+    assert_bool('INT64_MIN div -1 traps', ctx^.ExecutionState.Running, false);
+
+    test_end;
+end;
+
+end.
