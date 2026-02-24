@@ -9,7 +9,7 @@ uses
 
     wasm.types,
     wasm.parser,
-    wasm.vm, wasm.test.binary,
+    wasm.vm, wasm.test.binary.return42,
     wasm.types.stack
     {$IFDEF RUN_TESTS}
     , wasm.test
@@ -30,7 +30,7 @@ begin
     wasm.vm.init();
 
     writestringln('[main] Parsing WASM Binary');
-    Context:= wasm.parser.parse(@wasm.test.binary.TEST_BINARY_1[0], puint8(@wasm.test.binary.TEST_BINARY_1[0] + $26));
+    Context:= wasm.parser.parse(@wasm.test.binary.return42.BINARY[0], puint8(@wasm.test.binary.return42.BINARY[0] + wasm.test.binary.return42.BINARY_SIZE));
 
     writestringln('[main] Running...');
     Context^.ExecutionState.Running:= true;

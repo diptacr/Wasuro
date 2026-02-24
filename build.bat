@@ -24,6 +24,7 @@ if not exist "%LIB%" mkdir "%LIB%"
   -Fu"%SRC%\wasm\test" ^
   -Fu"%SRC%\wasm\test\opcodes" ^
   -Fu"%SRC%\wasm\test\parsers" ^
+  -Fu"%SRC%\wasm\test\binaries" ^
   -Fu"%SRC%\wasm\test\infra" ^
   -Fu"%SRC%\wasm\types" ^
   -Fu"%SRC%\wasm\vm" ^
