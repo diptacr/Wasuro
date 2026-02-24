@@ -53,7 +53,7 @@ begin
     assert_u64('min(NaN,1.0) is NaN', resultBits and $7FF8000000000000, $7FF8000000000000);
 
     { min(-0.0, +0.0) = -0.0 }
-    negZero := $8000000000000000;
+    negZero := TWASMUInt64($8000000000000000);
     code[0] := $A4;
     ctx := make_test_context(@code[0], 1);
     pushf64(ctx^.ExecutionState.Operand_Stack, TWASMPDouble(@negZero)^);
@@ -61,7 +61,7 @@ begin
     wasm.vm.tick(ctx);
     resultVal := popf64(ctx^.ExecutionState.Operand_Stack);
     resultBits := TWASMPUInt64(@resultVal)^;
-    assert_u64('min(-0,+0)=-0', resultBits, $8000000000000000);
+    assert_u64('min(-0,+0)=-0', resultBits, TWASMUInt64($8000000000000000));
 
     { min(+0.0, -0.0) = -0.0 (commutative) }
     code[0] := $A4;
@@ -71,7 +71,7 @@ begin
     wasm.vm.tick(ctx);
     resultVal := popf64(ctx^.ExecutionState.Operand_Stack);
     resultBits := TWASMPUInt64(@resultVal)^;
-    assert_u64('min(+0,-0)=-0', resultBits, $8000000000000000);
+    assert_u64('min(+0,-0)=-0', resultBits, TWASMUInt64($8000000000000000));
 
     test_end;
 end;

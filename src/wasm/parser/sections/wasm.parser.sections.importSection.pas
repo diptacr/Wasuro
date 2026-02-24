@@ -71,8 +71,10 @@ var
    i, j : TWASMUInt32;
    limitsFlag : TWASMUInt8;
 begin
-    writestring('[wasm.parser] Handle Section: Import - Size: ');
-    writeintlnWND(section_length, 0);
+    {$IFDEF DEBUG_OUTPUT}
+     console.writestring('[wasm.parser] Handle Section: Import - Size: ');
+     console.writeintlnWND(section_length, 0);
+    {$ENDIF}
 
     pos := buffer;
     bend := TWASMPUInt8(pos + section_length);
@@ -84,8 +86,10 @@ begin
     bytesRead := read_leb128_to_uint32(pos, bend, @ctx^.Sections.ImportSection^.ImportCount);
     Inc(pos, bytesRead);
 
+    {$IFDEF DEBUG_OUTPUT}
     writestring('[wasm.parser]     Import Count: ');
     writeintlnWND(ctx^.Sections.ImportSection^.ImportCount, 0);
+    {$ENDIF}
 
     if ctx^.Sections.ImportSection^.ImportCount > 0 then begin
         { Allocate entries }
@@ -165,8 +169,9 @@ begin
             end;
         end;
     end;
-
+    {$IFDEF DEBUG_OUTPUT}
     walk(ctx);
+    {$ENDIF}
 end;
 
 end.

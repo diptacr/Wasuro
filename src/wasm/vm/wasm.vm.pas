@@ -23,7 +23,9 @@ end;
 
 procedure init();
 begin
+     {$IFDEF DEBUG_OUTPUT}
      console.writestringln('[wasm.vm] Init');
+     {$ENDIF}
      OpcodeJumpTable := PWASMOpcodeJumpTable(kalloc(sizeof(TWASMOpcodeJumpTable)));
      initializeOpcodeJumpTable(@OpcodeJumpTable^[0]);
      wasm.vm.opcodes.fc.init();

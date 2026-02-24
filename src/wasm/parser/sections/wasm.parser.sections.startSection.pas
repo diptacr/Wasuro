@@ -16,15 +16,19 @@ var
    funcIdx : TWASMUInt32;
 
 begin
-    writestring('[wasm.parser] Handle Section: Start - Size: ');
-    writeintlnWND(section_length, 0);
+    {$IFDEF DEBUG_OUTPUT}
+     console.writestring('[wasm.parser] Handle Section: Start - Size: ');
+     console.writeintlnWND(section_length, 0);
+    {$ENDIF}
 
     { Read the start function index }
     bytesRead := read_leb128_to_uint32(buffer, TWASMPUInt8(buffer + section_length), @funcIdx);
     ctx^.Sections.StartIndex := TWASMInt32(funcIdx);
 
-    writestring('[wasm.parser]     Start Function Index: ');
-    writeintlnWND(funcIdx, 0);
+    {$IFDEF DEBUG_OUTPUT}
+     console.writestring('[wasm.parser]     Start Function Index: ');
+     console.writeintlnWND(funcIdx, 0);
+    {$ENDIF}
 end;
 
 end.

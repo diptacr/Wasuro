@@ -53,7 +53,7 @@ begin
     assert_u64('max(NaN,1.0) is NaN', resultBits and $7FF8000000000000, $7FF8000000000000);
 
     { max(-0.0, +0.0) = +0.0 }
-    negZero := $8000000000000000;
+    negZero := TWASMUInt64($8000000000000000);
     code[0] := $A5;
     ctx := make_test_context(@code[0], 1);
     pushf64(ctx^.ExecutionState.Operand_Stack, TWASMPDouble(@negZero)^);

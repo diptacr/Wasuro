@@ -3,7 +3,8 @@ param(
     [switch]$Test,
     [switch]$Clean,
     [switch]$Run,
-    [switch]$Help
+    [switch]$Help,
+    [switch]$Debug
 )
 
 # Also accept positional string args (e.g. .\build.ps1 clean test run)
@@ -12,6 +13,7 @@ foreach ($a in $args) {
         'test'  { $Test  = $true }
         'clean' { $Clean = $true }
         'run'   { $Run   = $true }
+        'debug' { $Debug = $true }
         'help'  { $Help  = $true }
     }
 }
@@ -22,6 +24,7 @@ if ($Help) {
     Write-Host '  test   - Build with tests enabled'
     Write-Host '  clean  - Clean build outputs'
     Write-Host '  run    - Run the built executable after building'
+    Write-Host '  debug  - Build with debug info and assertions enabled'
     Write-Host '  help   - Show this help message'
     exit 0
 }
@@ -38,7 +41,6 @@ if ($Clean) {
     if (Test-Path $Bin) { Remove-Item $Bin -Recurse -Force }
     if (Test-Path $Lib) { Remove-Item $Lib -Recurse -Force }
     Write-Host 'Clean complete.'
-    if (-not $Test -and -not $Run) { exit 0 }
 }
 
 if (-not (Test-Path $Bin)) { New-Item $Bin -ItemType Directory | Out-Null }
@@ -50,7 +52,8 @@ if ($LASTEXITCODE -ne 0) { exit 1 }
 
 # ── Build ────────────────────────────────────────────────────────────
 $TestFlags = @()
-if ($Test) { $TestFlags = @('-dRUN_TESTS') }
+if ($Test)  { $TestFlags += '-dRUN_TESTS' }
+if ($Debug) { $TestFlags += '-dDEBUG_OUTPUT' }
 
 $fpcArgs = @(
     $TestFlags
@@ -72,6 +75,8 @@ $fpcArgs = @(
     "-o$Bin\WASURO.exe"
     "$Src\project\WASURO.lpr"
 )
+
+Write-Output $fpcArgs
 
 & $FPC @fpcArgs
 if ($LASTEXITCODE -ne 0) {

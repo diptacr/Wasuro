@@ -16,7 +16,7 @@ begin
      Inc(Context^.ExecutionState.IP);
      b := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
      a := wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack);
-     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, a + b);
+     wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, TWASMInt32(TWASMUInt32(a) + TWASMUInt32(b)));
 end;
 
 end.

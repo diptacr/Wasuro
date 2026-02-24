@@ -20,8 +20,10 @@ var
     bytesRead : TWASMUInt8;
     dataCount : TWASMUInt32;
 begin
-    writestring('[wasm.parser] Handle Section: DataCount - Size: ');
-    writeintlnWND(section_length, 0);
+    {$IFDEF DEBUG_OUTPUT}
+     console.writestring('[wasm.parser] Handle Section: DataCount - Size: ');
+     console.writeintlnWND(section_length, 0);
+    {$ENDIF}
 
     pos := buffer;
     bend := TWASMPUInt8(buffer + section_length);
@@ -29,8 +31,10 @@ begin
     bytesRead := read_leb128_to_uint32(pos, bend, @dataCount);
     Inc(pos, bytesRead);
 
+    {$IFDEF DEBUG_OUTPUT}
     writestring('[wasm.parser]     Data Count: ');
     writeintlnWND(dataCount, 0);
+    {$ENDIF}
 
     { Pre-allocate data segment storage with correct count.
       The actual segment data will be filled when the Data section is parsed. }

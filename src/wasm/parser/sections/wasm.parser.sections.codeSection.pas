@@ -72,8 +72,10 @@ var
    totalSize: TWASMUInt32;
 
 begin
-    writestring('[wasm.parser] Handle Section: Code - Size: ');
-    writeintlnWND(section_length, 0);
+    {$IFDEF DEBUG_OUTPUT}
+     console.writestring('[wasm.parser] Handle Section: Code - Size: ');
+     console.writeintlnWND(section_length, 0);
+    {$ENDIF}
 
     // Initialize the read/end pointers
     pos:= buffer;
@@ -183,8 +185,9 @@ begin
             end;
         end;
     end;
-
+    {$IFDEF DEBUG_OUTPUT}
     walk(ctx);
+    {$ENDIF}
 end;
 
 end.

@@ -39,8 +39,10 @@ var
    flags : TWASMUInt32;
 
 begin
-    writestring('[wasm.parser] Handle Section: Memory - Size: ');
-    writeintlnWND(section_length, 0);
+    {$IFDEF DEBUG_OUTPUT}
+     console.writestring('[wasm.parser] Handle Section: Memory - Size: ');
+     console.writeintlnWND(section_length, 0);
+    {$ENDIF}
 
     pos := buffer;
     bend := TWASMPUInt8(buffer + section_length);
@@ -77,8 +79,9 @@ begin
         while ctx^.ExecutionState.Memory^.PageCount < mem^.InitialPages do
             wasm.types.heap.expand_heap(ctx^.ExecutionState.Memory);
     end;
-
+    {$IFDEF DEBUG_OUTPUT}
     walk(ctx);
+    {$ENDIF}
 end;
 
 end.

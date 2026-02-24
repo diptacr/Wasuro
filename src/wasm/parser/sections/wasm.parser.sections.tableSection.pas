@@ -19,8 +19,10 @@ var
     elem_type, limits_flag: TWASMUInt8;
     tables: PWASMTables;
 begin
-    writestring('[wasm.parser] Handle Section: Table - Size: ');
-    writeintlnWND(section_length, 0);
+    {$IFDEF DEBUG_OUTPUT}
+    console.writestring('[wasm.parser] Handle Section: Table - Size: ');
+    console.writeintlnWND(section_length, 0);
+    {$ENDIF}
 
     pos := buffer;
     buf_end := buffer;
@@ -29,8 +31,10 @@ begin
     bytesRead := read_leb128_to_uint32(pos, buf_end, @table_count);
     Inc(pos, bytesRead);
 
+    {$IFDEF DEBUG_OUTPUT}
     writestring('[wasm.parser]     Tables: ');
     writeintlnWND(table_count, 0);
+    {$ENDIF}
 
     tables := ctx^.ExecutionState.Tables;
     tables^.TableCount := table_count;
@@ -55,17 +59,19 @@ begin
             Inc(pos, bytesRead);
         end;
 
-        writestring('[wasm.parser]     Table ');
-        writeintWND(i, 0);
-        writestring(' - ElemType: $');
-        writeintWND(elem_type, 0);
-        writestring(' Initial: ');
-        writeintWND(min_size, 0);
+        {$IFDEF DEBUG_OUTPUT}
+        console.writestring('[wasm.parser]     Table ');
+        console.writeintWND(i, 0);
+        console.writestring(' - ElemType: $');
+        console.writeintWND(elem_type, 0);
+        console.writestring(' Initial: ');
+        console.writeintWND(min_size, 0);
         if limits_flag = 1 then begin
-            writestring(' Max: ');
-            writeintWND(max_size, 0);
+            console.writestring(' Max: ');
+            console.writeintWND(max_size, 0);
         end;
-        writestringln('');
+        console.writestringln('');
+        {$ENDIF}
 
         tables^.Tables[i].ElementType := elem_type;
         tables^.Tables[i].Size := min_size;

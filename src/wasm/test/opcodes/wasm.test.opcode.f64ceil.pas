@@ -57,7 +57,7 @@ begin
     assert_true('ceil(+Inf)=+Inf', resultBits = $7FF0000000000000);
 
     { Infinity: ceil(-Inf) = -Inf }
-    nanBits := $FFF0000000000000;
+    nanBits := TWASMUInt64($FFF0000000000000);
     code[0] := $9B;
     ctx := make_test_context(@code[0], 1);
     pushf64(ctx^.ExecutionState.Operand_Stack, TWASMPDouble(@nanBits)^);

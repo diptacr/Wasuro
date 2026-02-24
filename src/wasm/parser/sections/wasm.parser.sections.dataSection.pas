@@ -25,8 +25,10 @@ var
    segData : TWASMPUInt8;
 
 begin
-    writestring('[wasm.parser] Handle Section: Data - Size: ');
-    writeintlnWND(section_length, 0);
+    {$IFDEF DEBUG_OUTPUT}
+     console.writestring('[wasm.parser] Handle Section: Data - Size: ');
+     console.writeintlnWND(section_length, 0);
+    {$ENDIF}
 
     pos := buffer;
     bend := TWASMPUInt8(buffer + section_length);
@@ -74,12 +76,14 @@ begin
             bytesRead := read_leb128_to_uint32(pos, bend, @dataSize);
             Inc(pos, bytesRead);
 
+            {$IFDEF DEBUG_OUTPUT}
             writestring('[wasm.parser]     Data Segment ');
             writeintWND(i, 0);
             writestring(' - Mode: 0 Offset: ');
             writeintWND(offset, 0);
             writestring(' Size: ');
             writeintlnWND(dataSize, 0);
+            {$ENDIF}
 
             { Store segment data for bulk memory ops }
             segData := TWASMPUInt8(kalloc(dataSize));
@@ -100,10 +104,12 @@ begin
             bytesRead := read_leb128_to_uint32(pos, bend, @dataSize);
             Inc(pos, bytesRead);
 
+            {$IFDEF DEBUG_OUTPUT}
             writestring('[wasm.parser]     Data Segment ');
             writeintWND(i, 0);
             writestring(' - Mode: 1 (passive) Size: ');
             writeintlnWND(dataSize, 0);
+            {$ENDIF}
 
             { Store segment data for bulk memory ops }
             segData := TWASMPUInt8(kalloc(dataSize));
@@ -140,6 +146,7 @@ begin
             bytesRead := read_leb128_to_uint32(pos, bend, @dataSize);
             Inc(pos, bytesRead);
 
+            {$IFDEF DEBUG_OUTPUT}
             writestring('[wasm.parser]     Data Segment ');
             writeintWND(i, 0);
             writestring(' - Mode: 2 MemIdx: ');
@@ -148,6 +155,7 @@ begin
             writeintWND(offset, 0);
             writestring(' Size: ');
             writeintlnWND(dataSize, 0);
+            {$ENDIF}
 
             { Store segment data for bulk memory ops }
             segData := TWASMPUInt8(kalloc(dataSize));
