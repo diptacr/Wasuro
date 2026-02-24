@@ -1,6 +1,6 @@
 # WASURO
 
-A WebAssembly virtual machine for the [Asuro](https://github.com/Nosfex/Asuro) operating system, written in Standard Pascal.
+A WebAssembly virtual machine for the [Asuro](https://gitea.spexeah.com/Spexeah/Asuro) operating system, written in Standard Pascal.
 
 WASURO parses and executes WASM binaries directly in a bare-metal kernel environment — no runtime library, no classes, no heap manager beyond what the OS provides.
 
@@ -8,18 +8,18 @@ WASURO parses and executes WASM binaries directly in a bare-metal kernel environ
 
 ```
 src/
-├── emu/            # OS emulation layer (types, console, memory, LEB128)
-├── wasm/
-│   ├── parser/     # WASM binary parser
+├── emu/               # OS emulation layer (types, console, memory, LEB128)
+├── wasm/              # WASM Virtual Machine
+│   ├── parser/        # WASM binary parser
 │   │   └── sections/  # Section-specific parsers (type, function, export,
-│   │                   #   code, global, memory, start, data, etc.)
-│   ├── types/      # WASM type system, stack, and linear memory (heap)
-│   ├── vm/         # VM tick loop and opcode jump table
-│   └── test/       # Test suite
-│       ├── infra/      # Stack, heap, LEB128 tests
-│       ├── opcodes/    # Per-opcode test units
-│       └── parsers/    # Per-section parser tests
-└── project/        # Lazarus project files
+│   │                  #   code, global, memory, start, data, etc.)
+│   ├── types/         # WASM type system, stack, and linear memory (heap)
+│   ├── vm/            # VM tick loop and opcode jump table
+│   └── test/          # Test suite
+│       ├── infra/     # Stack, heap, LEB128 tests
+│       ├── opcodes/   # Per-opcode test units
+│       └── parsers/   # Per-section parser tests
+└── project/           # Lazarus project files
 ```
 
 ### Key components
