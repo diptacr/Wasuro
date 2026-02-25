@@ -7,7 +7,7 @@ procedure run;
 implementation
 
 uses
-    wasm.types.builtin, leb128, wasm.test.framework;
+    wasm.types.builtin, wasm.types.leb128, wasm.test.framework;
 
 procedure run;
 var
@@ -17,7 +17,7 @@ var
     res64 : TWASMUInt64;
     bytesRead : TWASMUInt8;
 begin
-    test_begin('leb128');
+    test_begin('wasm.types.leb128');
     buf_end := @buf[10];
 
     { Test: single byte, value 0 }

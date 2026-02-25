@@ -3,7 +3,7 @@ unit wasm.parser.sections.customSection;
 interface
 
 uses
-    wasm.types.builtin, lmemorymanager, console, leb128,
+    wasm.types.builtin, lmemorymanager, console, wasm.types.leb128,
     wasm.types.context;
 
 procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);

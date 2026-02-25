@@ -8,7 +8,7 @@ procedure _WASM_opcode_TableGrowOp(Context : PWASMProcessContext);
 
 implementation
 
-uses wasm.types.builtin, wasm.types.stack, leb128, lmemorymanager;
+uses wasm.types.builtin, wasm.types.stack, wasm.types.leb128, lmemorymanager;
 
 { table.grow x: [val, n] -> [i32]
   Grow table x by n elements, initializing with val.

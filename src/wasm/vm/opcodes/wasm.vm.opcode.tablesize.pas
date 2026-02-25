@@ -8,7 +8,7 @@ procedure _WASM_opcode_TableSizeOp(Context : PWASMProcessContext);
 
 implementation
 
-uses wasm.types.builtin, wasm.types.stack, leb128;
+uses wasm.types.builtin, wasm.types.stack, wasm.types.leb128;
 
 { table.size x: [] -> [i32]
   Returns the current size of table x }

@@ -8,7 +8,7 @@ procedure _WASM_opcode_MemoryGrowOp(Context : PWASMProcessContext);
 
 implementation
 
-uses leb128, wasm.types.builtin, wasm.types.heap, wasm.types.stack;
+uses wasm.types.leb128, wasm.types.builtin, wasm.types.heap, wasm.types.stack;
 
 procedure _WASM_opcode_MemoryGrowOp(Context : PWASMProcessContext);
 var reserved : TWASMUInt32; bytesRead : TWASMUInt8; pages_to_grow, old_size : TWASMUInt32; i : TWASMUInt32;

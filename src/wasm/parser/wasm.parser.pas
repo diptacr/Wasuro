@@ -3,7 +3,7 @@ unit wasm.parser;
 interface
 
 uses
-    wasm.types.builtin, lmemorymanager, console, leb128,
+    wasm.types.builtin, lmemorymanager, console, wasm.types.leb128,
     wasm.types.enums, wasm.types.sections, wasm.types.context, wasm.types.heap, wasm.types.stack,
     wasm.parser.sections, wasm.types.constants;
 
@@ -62,6 +62,30 @@ begin
     ctx^.ExecutionState.ElementSegments:= PWASMElementSegments(kalloc(sizeof(TWASMElementSegments)));
     ctx^.ExecutionState.ElementSegments^.SegmentCount:= 0;
     ctx^.ExecutionState.ElementSegments^.Segments:= nil;
+
+    // Initialize WASI/import support
+    ctx^.ExitCode := 0;
+    ctx^.ResolvedImports.Count := 0;
+    ctx^.ResolvedImports.Imports := nil;
+
+    // Initialize WASI hooks (all nil)
+    ctx^.WASIHooks.OnFdWrite := nil;
+    ctx^.WASIHooks.OnFdRead := nil;
+    ctx^.WASIHooks.OnFdClose := nil;
+    ctx^.WASIHooks.OnFdSeek := nil;
+    ctx^.WASIHooks.OnProcExit := nil;
+    ctx^.WASIHooks.OnClockTimeGet := nil;
+    ctx^.WASIHooks.OnClockResGet := nil;
+    ctx^.WASIHooks.OnRandomGet := nil;
+    ctx^.WASIHooks.OnArgsSizesGet := nil;
+    ctx^.WASIHooks.OnArgsGet := nil;
+    ctx^.WASIHooks.OnEnvironSizesGet := nil;
+    ctx^.WASIHooks.OnEnvironGet := nil;
+
+    // Initialize host function registry (empty, lazy-init on first register)
+    ctx^.HostFuncRegistry.Count := 0;
+    ctx^.HostFuncRegistry.Capacity := 0;
+    ctx^.HostFuncRegistry.Entries := nil;
 
     newContext:= ctx;
 end;

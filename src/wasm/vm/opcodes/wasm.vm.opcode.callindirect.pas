@@ -8,7 +8,7 @@ procedure _WASM_opcode_CallIndirectOp(Context : PWASMProcessContext);
 
 implementation
 
-uses leb128, lmemorymanager, console,
+uses wasm.types.leb128, lmemorymanager, console,
      wasm.types.builtin, wasm.types.enums,
      wasm.types.values, wasm.types.sections, wasm.types.stack,
      wasm.types.constants, wasm.vm.control;
@@ -43,6 +43,7 @@ var
     return_ip, saved_top: TWASMUInt32;
     cs, os: PWASMStack;
     tables: PWASMTables;
+    import_func_count, local_idx: TWASMUInt32;
 begin
     cs := Context^.ExecutionState.Control_Stack;
     os := Context^.ExecutionState.Operand_Stack;
@@ -91,15 +92,36 @@ begin
         exit;
     end;
 
+    { Determine how many function imports exist }
+    import_func_count := Context^.ResolvedImports.Count;
+
+    { Check if this is a host function call (import) }
+    if func_idx < import_func_count then begin
+        if Context^.ResolvedImports.Imports[func_idx].IsResolved then begin
+            Context^.ResolvedImports.Imports[func_idx].Callback(Context);
+        end else begin
+            console.writestring('[wasm.vm] Trap: call_indirect to unresolved import "');
+            console.writestring(Context^.ResolvedImports.Imports[func_idx].ModuleName);
+            console.writestring(':');
+            console.writestring(Context^.ResolvedImports.Imports[func_idx].FieldName);
+            console.writestringln('"');
+            Context^.ExecutionState.Running := false;
+        end;
+        exit;
+    end;
+
+    { Adjust to local function index }
+    local_idx := func_idx - import_func_count;
+
     { Validate function index }
-    if func_idx >= Context^.Sections.FunctionSection^.FunctionCount then begin
+    if local_idx >= Context^.Sections.FunctionSection^.FunctionCount then begin
         console.writestringln('[wasm.vm.opcodes] Trap: call_indirect - function index out of range');
         Context^.ExecutionState.Running := false;
         exit;
     end;
 
     { Type check: compare expected type with actual function type }
-    actual_type_idx := Context^.Sections.FunctionSection^.Functions[func_idx].Index;
+    actual_type_idx := Context^.Sections.FunctionSection^.Functions[local_idx].Index;
     expected_type := @Context^.Sections.TypeSection^.Types[expected_type_idx];
     actual_type := @Context^.Sections.TypeSection^.Types[actual_type_idx];
 
@@ -109,8 +131,8 @@ begin
         exit;
     end;
 
-    { Perform the call — same as CallOp but using the looked-up func_idx }
-    code_entry := @Context^.Sections.CodeSection^.Entries[func_idx];
+    { Perform the call — same as CallOp but using the looked-up local_idx }
+    code_entry := @Context^.Sections.CodeSection^.Entries[local_idx];
 
     param_count := actual_type^.ParamCount;
     decl_count  := code_entry^.Locals.LocalCount;

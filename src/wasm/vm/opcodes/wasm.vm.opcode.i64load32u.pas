@@ -8,7 +8,7 @@ procedure _WASM_opcode_I64Load32UOp(Context : PWASMProcessContext);
 
 implementation
 
-uses console, leb128, wasm.types.builtin, wasm.types.heap, wasm.types.stack;
+uses console, wasm.types.leb128, wasm.types.builtin, wasm.types.heap, wasm.types.stack;
 
 procedure _WASM_opcode_I64Load32UOp(Context : PWASMProcessContext);
 var align_val, offset_val : TWASMUInt32; bytesRead : TWASMUInt8; addr : TWASMUInt32; result_val : TWASMUInt32;

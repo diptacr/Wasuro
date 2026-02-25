@@ -24,7 +24,7 @@ procedure do_branch(Context: PWASMProcessContext; label_depth: TWASMUInt32);
 implementation
 
 uses
-    leb128, wasm.types.constants;
+    wasm.types.leb128, wasm.types.constants;
 
 procedure push_control_frame(cs: PWASMStack; frame_type: TWASMInt32;
                              target_ip: TWASMInt32; saved_stack_top: TWASMInt32);

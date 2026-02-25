@@ -8,7 +8,7 @@ procedure _WASM_opcode_GlobalGetOp(Context : PWASMProcessContext);
 
 implementation
 
-uses console, leb128, wasm.types.builtin, wasm.types.enums, wasm.types.values, wasm.types.sections, wasm.types.stack;
+uses console, wasm.types.leb128, wasm.types.builtin, wasm.types.enums, wasm.types.values, wasm.types.sections, wasm.types.stack;
 
 procedure _WASM_opcode_GlobalGetOp(Context : PWASMProcessContext);
 var idx : TWASMUInt32; bytesRead : TWASMUInt8; entry : PWASMGlobalEntry;

@@ -2,3 +2,5 @@
 lib
 AGENTS.md
 GAP_ANALYSIS.md
+*.pdf
+doc/WASI.md

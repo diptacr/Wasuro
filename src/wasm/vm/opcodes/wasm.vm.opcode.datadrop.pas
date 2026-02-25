@@ -8,7 +8,7 @@ procedure _WASM_opcode_DataDropOp(Context : PWASMProcessContext);
 
 implementation
 
-uses wasm.types.builtin, leb128;
+uses wasm.types.builtin, wasm.types.leb128;
 
 { data.drop x: marks data segment x as dropped }
 procedure _WASM_opcode_DataDropOp(Context : PWASMProcessContext);

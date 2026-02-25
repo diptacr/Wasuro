@@ -4,7 +4,8 @@ param(
     [switch]$Clean,
     [switch]$Run,
     [switch]$Help,
-    [switch]$Debug
+    [switch]$Debug,
+    [switch]$E2E
 )
 
 # Also accept positional string args (e.g. .\build.ps1 clean test run)
@@ -15,6 +16,7 @@ foreach ($a in $args) {
         'run'   { $Run   = $true }
         'debug' { $Debug = $true }
         'help'  { $Help  = $true }
+        'e2e'   { $E2E   = $true }
     }
 }
 
@@ -24,6 +26,7 @@ if ($Help) {
     Write-Host '  test   - Build with tests enabled'
     Write-Host '  clean  - Clean build outputs'
     Write-Host '  run    - Run the built executable after building'
+    Write-Host '  e2e    - Run end-to-end wat tests'
     Write-Host '  debug  - Build with debug info and assertions enabled'
     Write-Host '  help   - Show this help message'
     exit 0
@@ -35,11 +38,16 @@ $Bin  = Join-Path $Root 'bin'
 $Lib  = Join-Path $Root 'lib'
 $FPC  = 'C:\Lazarus\fpc\3.2.2\bin\x86_64-win64\fpc.exe'
 
+if (($Test -and $E2E) -or ($Run -and $E2E)) {
+    Write-Host 'Error: --e2e cannot be combined with --test or --run. E2E implies a run of E2E wat tests.' -ForegroundColor Red
+    exit 1
+}
+
 # ── Clean ────────────────────────────────────────────────────────────
 if ($Clean) {
     Write-Host 'Cleaning build outputs...'
-    if (Test-Path $Bin) { Remove-Item $Bin -Recurse -Force }
-    if (Test-Path $Lib) { Remove-Item $Lib -Recurse -Force }
+    if (Test-Path $Bin) { Remove-Item "$Bin\*" -Recurse -Force }
+    if (Test-Path $Lib) { Remove-Item "$Lib\*" -Recurse -Force }
     Write-Host 'Clean complete.'
 }
 
@@ -57,6 +65,7 @@ if ($Debug) { $TestFlags += '-dDEBUG_OUTPUT' }
 
 $fpcArgs = @(
     $TestFlags
+    "-v0ew"
     "-FE$Bin"
     "-FU$Lib"
     "-Fu$Src\emu"
@@ -71,12 +80,13 @@ $fpcArgs = @(
     "-Fu$Src\wasm\types"
     "-Fu$Src\wasm\vm"
     "-Fu$Src\wasm\vm\opcodes"
+    "-Fu$Src\wasm\wasi"
+    "-Fu$Src\wasm\wasi\preview1"
+    "-Fu$Src\wasm\test\wasi"
     '-gw3'
     "-o$Bin\WASURO.exe"
     "$Src\project\WASURO.lpr"
 )
-
-Write-Output $fpcArgs
 
 & $FPC @fpcArgs
 if ($LASTEXITCODE -ne 0) {
@@ -90,4 +100,14 @@ Write-Host "Build succeeded: $Bin\WASURO.exe"
 if ($Run) {
     Write-Host 'Running WASURO...'
     & "$Bin\WASURO.exe"
+}
+
+if ($E2E) {
+    Write-Host 'Running end-to-end WAT tests...'
+    & (Join-Path $Root 'wat.ps1')
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "WAT tests failed with error code $LASTEXITCODE"
+        exit $LASTEXITCODE
+    }
+    exit $LASTEXITCODE
 }

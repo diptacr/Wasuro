@@ -161,6 +161,7 @@ begin
     ctx := PWASMProcessContext(kalloc(sizeof(TWASMProcessContext)));
     ctx^.ValidBinary := true;
     ctx^.Version := 1;
+    ctx^.ExitCode := 0;
 
     { Execution state }
     ctx^.ExecutionState.Code := code;
@@ -199,11 +200,35 @@ begin
 
     { Sections }
     ctx^.Sections.TypeSection := nil;
+    ctx^.Sections.ImportSection := nil;
     ctx^.Sections.FunctionSection := nil;
     ctx^.Sections.ExportSection := nil;
     ctx^.Sections.CodeSection := nil;
     ctx^.Sections.MemorySection := nil;
     ctx^.Sections.StartIndex := -1;
+
+    { Resolved imports }
+    ctx^.ResolvedImports.Count := 0;
+    ctx^.ResolvedImports.Imports := nil;
+
+    { WASI hooks (all nil) }
+    ctx^.WASIHooks.OnFdWrite := nil;
+    ctx^.WASIHooks.OnFdRead := nil;
+    ctx^.WASIHooks.OnFdClose := nil;
+    ctx^.WASIHooks.OnFdSeek := nil;
+    ctx^.WASIHooks.OnProcExit := nil;
+    ctx^.WASIHooks.OnClockTimeGet := nil;
+    ctx^.WASIHooks.OnClockResGet := nil;
+    ctx^.WASIHooks.OnRandomGet := nil;
+    ctx^.WASIHooks.OnArgsSizesGet := nil;
+    ctx^.WASIHooks.OnArgsGet := nil;
+    ctx^.WASIHooks.OnEnvironSizesGet := nil;
+    ctx^.WASIHooks.OnEnvironGet := nil;
+
+    { Host function registry (empty, lazy-init on first register) }
+    ctx^.HostFuncRegistry.Count := 0;
+    ctx^.HostFuncRegistry.Capacity := 0;
+    ctx^.HostFuncRegistry.Entries := nil;
 
     make_test_context := ctx;
 end;

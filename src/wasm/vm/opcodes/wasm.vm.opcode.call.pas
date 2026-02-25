@@ -8,7 +8,7 @@ procedure _WASM_opcode_CallOp(Context : PWASMProcessContext);
 
 implementation
 
-uses leb128, lmemorymanager, wasm.types.builtin, wasm.types.enums,
+uses wasm.types.leb128, lmemorymanager, console, wasm.types.builtin, wasm.types.enums,
      wasm.types.values, wasm.types.sections, wasm.types.stack,
      wasm.types.constants, wasm.vm.control;
 
@@ -23,6 +23,7 @@ var
     i, j: TWASMUInt32;
     return_ip, saved_top: TWASMUInt32;
     cs, os: PWASMStack;
+    import_func_count, local_idx: TWASMUInt32;
 begin
     cs := Context^.ExecutionState.Control_Stack;
     os := Context^.ExecutionState.Operand_Stack;
@@ -33,12 +34,36 @@ begin
         @Context^.ExecutionState.Code[Context^.ExecutionState.Limit],
         @func_idx);
     Inc(Context^.ExecutionState.IP, bytesRead);
+
+    { Determine how many function imports exist }
+    import_func_count := Context^.ResolvedImports.Count;
+
+    if func_idx < import_func_count then begin
+        { --- Host function call (import) --- }
+        if Context^.ResolvedImports.Imports[func_idx].IsResolved then begin
+            Context^.ResolvedImports.Imports[func_idx].Callback(Context);
+            { Callback has already popped args and pushed results.
+              IP already advanced past the call instruction. }
+        end else begin
+            { Trap: unresolved import }
+            console.writestring('[wasm.vm] Trap: call to unresolved import "');
+            console.writestring(Context^.ResolvedImports.Imports[func_idx].ModuleName);
+            console.writestring(':');
+            console.writestring(Context^.ResolvedImports.Imports[func_idx].FieldName);
+            console.writestringln('"');
+            Context^.ExecutionState.Running := false;
+        end;
+        exit;
+    end;
+
+    { --- Module function call (existing logic with adjusted index) --- }
+    local_idx := func_idx - import_func_count;
     return_ip := Context^.ExecutionState.IP; { instruction after call }
 
     { Look up function metadata }
-    type_idx   := Context^.Sections.FunctionSection^.Functions[func_idx].Index;
+    type_idx   := Context^.Sections.FunctionSection^.Functions[local_idx].Index;
     func_type  := @Context^.Sections.TypeSection^.Types[type_idx];
-    code_entry := @Context^.Sections.CodeSection^.Entries[func_idx];
+    code_entry := @Context^.Sections.CodeSection^.Entries[local_idx];
 
     param_count := func_type^.ParamCount;
     decl_count  := code_entry^.Locals.LocalCount;

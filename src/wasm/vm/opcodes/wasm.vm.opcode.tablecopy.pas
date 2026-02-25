@@ -8,7 +8,7 @@ procedure _WASM_opcode_TableCopyOp(Context : PWASMProcessContext);
 
 implementation
 
-uses wasm.types.builtin, wasm.types.stack, leb128;
+uses wasm.types.builtin, wasm.types.stack, wasm.types.leb128;
 
 { table.copy x y: [d, s, n] -> []
   Copy n elements from table y at offset s to table x at offset d.

@@ -8,7 +8,7 @@ procedure _WASM_opcode_MemorySizeOp(Context : PWASMProcessContext);
 
 implementation
 
-uses leb128, wasm.types.builtin, wasm.types.stack;
+uses wasm.types.leb128, wasm.types.builtin, wasm.types.stack;
 
 procedure _WASM_opcode_MemorySizeOp(Context : PWASMProcessContext);
 var reserved : TWASMUInt32; bytesRead : TWASMUInt8;
