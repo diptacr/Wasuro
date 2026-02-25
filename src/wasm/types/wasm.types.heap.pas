@@ -3,7 +3,7 @@ unit wasm.types.heap;
 interface
 
 uses
-    wasm.types.builtin, lmemorymanager, leb128;
+    wasm.types.builtin, lmemorymanager, wasm.types.leb128;
 
 const
     PAGE_SIZE = $10000; // 64k
@@ -32,6 +32,11 @@ function write_uint8(location : TWASMUInt32; heap : PWasmHeap; value : TWASMUInt
 function write_uint16(location : TWASMUInt32; heap : PWasmHeap; value : TWASMUInt16) : TWASMBoolean;
 function write_uint32(location : TWASMUInt32; heap : PWasmHeap; value : TWASMUInt32) : TWASMBoolean;
 function write_uint64(location : TWASMUInt32; heap : PWasmHeap; value : TWASMUInt64) : TWASMBoolean;
+
+{ Get a native pointer to a location in linear memory.
+  Only valid if the range [location..location+len-1] lies within a single page.
+  Returns nil if out of bounds. }
+function get_ptr(location : TWASMUInt32; heap : PWasmHeap) : TWASMPUInt8;
 
 implementation
 
@@ -370,6 +375,19 @@ begin
             write_uint64:= true;
         end;
     end;
+end;
+
+function get_ptr(location : TWASMUInt32; heap : PWasmHeap) : TWASMPUInt8;
+var
+    pageIndex, pageOffset : TWASMUInt32;
+begin
+    if location >= heap^.PageCount * PAGE_SIZE then begin
+        get_ptr := nil;
+        exit;
+    end;
+    pageIndex  := get_page_index(location);
+    pageOffset := get_page_offset(location);
+    get_ptr := TWASMPUInt8(heap^.Memory[pageIndex] + pageOffset);
 end;
 
 

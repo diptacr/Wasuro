@@ -11,7 +11,7 @@ procedure _WASM_opcode_FCPrefix(Context : PWASMProcessContext);
 implementation
 
 uses
-    console, leb128, lmemorymanager,
+    console, wasm.types.leb128, lmemorymanager,
     { Saturating truncation }
     wasm.vm.opcode.i32truncsatf32s, wasm.vm.opcode.i32truncsatf32u,
     wasm.vm.opcode.i32truncsatf64s, wasm.vm.opcode.i32truncsatf64u,

@@ -8,7 +8,7 @@ procedure _WASM_opcode_TableGetOp(Context : PWASMProcessContext);
 
 implementation
 
-uses leb128, console, wasm.types.builtin, wasm.types.values, wasm.types.sections, wasm.types.stack;
+uses wasm.types.leb128, console, wasm.types.builtin, wasm.types.values, wasm.types.sections, wasm.types.stack;
 
 procedure _WASM_opcode_TableGetOp(Context : PWASMProcessContext);
 var

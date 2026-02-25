@@ -8,7 +8,7 @@ procedure _WASM_opcode_IfOp(Context : PWASMProcessContext);
 
 implementation
 
-uses wasm.types.builtin, wasm.types.stack, wasm.types.constants, wasm.vm.control, leb128;
+uses wasm.types.builtin, wasm.types.stack, wasm.types.constants, wasm.vm.control, wasm.types.leb128;
 
 procedure _WASM_opcode_IfOp(Context : PWASMProcessContext);
 var

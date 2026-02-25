@@ -8,7 +8,7 @@ procedure _WASM_opcode_ElemDropOp(Context : PWASMProcessContext);
 
 implementation
 
-uses wasm.types.builtin, leb128;
+uses wasm.types.builtin, wasm.types.leb128;
 
 { elem.drop x: marks element segment x as dropped }
 procedure _WASM_opcode_ElemDropOp(Context : PWASMProcessContext);

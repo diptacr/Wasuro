@@ -8,7 +8,7 @@ procedure _WASM_opcode_I64ConstOp(Context : PWASMProcessContext);
 
 implementation
 
-uses leb128, wasm.types.builtin, wasm.types.stack;
+uses wasm.types.leb128, wasm.types.builtin, wasm.types.stack;
 
 procedure _WASM_opcode_I64ConstOp(Context : PWASMProcessContext);
 var

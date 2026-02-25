@@ -8,7 +8,7 @@ procedure _WASM_opcode_TableFillOp(Context : PWASMProcessContext);
 
 implementation
 
-uses wasm.types.builtin, wasm.types.stack, leb128;
+uses wasm.types.builtin, wasm.types.stack, wasm.types.leb128;
 
 { table.fill x: [i, val, n] -> []
   Fill n elements of table x starting at index i with value val }

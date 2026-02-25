@@ -8,7 +8,7 @@ procedure _WASM_opcode_TableInitOp(Context : PWASMProcessContext);
 
 implementation
 
-uses wasm.types.builtin, wasm.types.stack, leb128;
+uses wasm.types.builtin, wasm.types.stack, wasm.types.leb128;
 
 { table.init x y: [d, s, n] -> []
   Copy n elements from element segment y, starting at offset s,

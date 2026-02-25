@@ -8,7 +8,7 @@ procedure _WASM_opcode_SelectTypedOp(Context : PWASMProcessContext);
 
 implementation
 
-uses leb128, wasm.types.builtin, wasm.types.stack;
+uses wasm.types.leb128, wasm.types.builtin, wasm.types.stack;
 
 { select t* : like select, but preceded by a type vector immediate.
   Binary encoding: 0x1C vec(valtype)

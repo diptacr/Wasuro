@@ -8,7 +8,7 @@ procedure _WASM_opcode_BrTableOp(Context : PWASMProcessContext);
 
 implementation
 
-uses leb128, wasm.types.builtin, wasm.types.stack, wasm.vm.control;
+uses wasm.types.leb128, wasm.types.builtin, wasm.types.stack, wasm.vm.control;
 
 procedure _WASM_opcode_BrTableOp(Context : PWASMProcessContext);
 var

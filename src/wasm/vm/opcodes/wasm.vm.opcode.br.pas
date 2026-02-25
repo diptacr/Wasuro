@@ -8,7 +8,7 @@ procedure _WASM_opcode_BrOp(Context : PWASMProcessContext);
 
 implementation
 
-uses leb128, wasm.types.builtin, wasm.vm.control;
+uses wasm.types.leb128, wasm.types.builtin, wasm.vm.control;
 
 procedure _WASM_opcode_BrOp(Context : PWASMProcessContext);
 var

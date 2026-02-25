@@ -9,7 +9,7 @@ procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMPro
 
 implementation
 
-uses console, leb128, lmemorymanager, wasm.types.sections;
+uses console, wasm.types.leb128, lmemorymanager, wasm.types.sections;
 
 { DataCount section (ID 12): contains a single u32 count of data segments.
   Pre-allocates the DataSegments array so that bulk memory opcodes

@@ -254,7 +254,21 @@ uses
     wasm.test.binary.arithmetic,
     wasm.test.binary.locals,
     wasm.test.binary.memroundtrip,
-    wasm.test.binary.controlflow;
+    wasm.test.binary.controlflow,
+    { WASI tests }
+    wasm.test.wasi.types,
+    wasm.test.wasi.registry,
+    wasm.test.wasi.hooks,
+    wasm.test.wasi.call,
+    wasm.test.wasi.glue,
+    wasm.test.wasi.clock,
+    wasm.test.wasi.random,
+    wasm.test.wasi.stubs,
+    wasm.test.wasi.extensibility,
+    { Glue unit }
+    wasm.test.glue,
+    { VM setup }
+    wasm.test.vm.setup;
 
 procedure run_all_tests;
 begin
@@ -536,6 +550,23 @@ begin
     wasm.test.binary.locals.run;
     wasm.test.binary.memroundtrip.run;
     wasm.test.binary.controlflow.run;
+
+    { WASI }
+    wasm.test.wasi.types.run;
+    wasm.test.wasi.registry.run;
+    wasm.test.wasi.hooks.run;
+    wasm.test.wasi.call.run;
+    wasm.test.wasi.glue.run;
+    wasm.test.wasi.clock.run;
+    wasm.test.wasi.random.run;
+    wasm.test.wasi.stubs.run;
+    wasm.test.wasi.extensibility.run;
+
+    { Glue unit }
+    wasm.test.glue.run;
+
+    { VM setup }
+    wasm.test.vm.setup.run;
 
     { Summary }
     writestringln('');
