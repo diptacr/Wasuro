@@ -8,7 +8,7 @@ procedure _WASM_opcode_DropOp(Context : PWASMProcessContext);
 
 implementation
 
-uses console;
+uses wasm.vm.io;
 
 procedure _WASM_opcode_DropOp(Context : PWASMProcessContext);
 begin
@@ -16,7 +16,7 @@ begin
      if Context^.ExecutionState.Operand_Stack^.Top > 0 then
         Dec(Context^.ExecutionState.Operand_Stack^.Top)
      else begin
-        console.writestringln('[wasm.vm.opcodes.dropop] Stack underflow!');
+        wasm.vm.io.writestringln('[wasm.vm.opcodes.dropop] Stack underflow!');
         Context^.ExecutionState.Running := false;
      end;
 end;

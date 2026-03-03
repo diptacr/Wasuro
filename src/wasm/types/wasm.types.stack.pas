@@ -3,7 +3,7 @@ unit wasm.types.stack;
 interface
 
 uses
-    wasm.types.builtin, lmemorymanager, console,
+    wasm.types.builtin, lmemorymanager, wasm.vm.io,
     wasm.types.enums, wasm.types.values;
 
 const

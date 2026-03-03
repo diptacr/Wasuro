@@ -8,7 +8,7 @@ procedure _WASM_opcode_CallIndirectOp(Context : PWASMProcessContext);
 
 implementation
 
-uses wasm.types.leb128, lmemorymanager, console,
+uses wasm.types.leb128, lmemorymanager, wasm.vm.io,
      wasm.types.builtin, wasm.types.enums,
      wasm.types.values, wasm.types.sections, wasm.types.stack,
      wasm.types.constants, wasm.vm.control;
@@ -70,14 +70,14 @@ begin
 
     { Bounds check: table exists }
     if table_idx_byte >= tables^.TableCount then begin
-        console.writestringln('[wasm.vm.opcodes] Trap: call_indirect - table index out of range');
+        wasm.vm.io.writestringln('[wasm.vm.opcodes] Trap: call_indirect - table index out of range');
         Context^.ExecutionState.Running := false;
         exit;
     end;
 
     { Bounds check: element index within table }
     if elem_idx >= tables^.Tables[table_idx_byte].Size then begin
-        console.writestringln('[wasm.vm.opcodes] Trap: call_indirect - element index out of bounds');
+        wasm.vm.io.writestringln('[wasm.vm.opcodes] Trap: call_indirect - element index out of bounds');
         Context^.ExecutionState.Running := false;
         exit;
     end;
@@ -87,7 +87,7 @@ begin
 
     { Check for uninitialized table element }
     if func_idx = $FFFFFFFF then begin
-        console.writestringln('[wasm.vm.opcodes] Trap: call_indirect - uninitialized table element');
+        wasm.vm.io.writestringln('[wasm.vm.opcodes] Trap: call_indirect - uninitialized table element');
         Context^.ExecutionState.Running := false;
         exit;
     end;
@@ -100,11 +100,11 @@ begin
         if Context^.ResolvedImports.Imports[func_idx].IsResolved then begin
             Context^.ResolvedImports.Imports[func_idx].Callback(Context);
         end else begin
-            console.writestring('[wasm.vm] Trap: call_indirect to unresolved import "');
-            console.writestring(Context^.ResolvedImports.Imports[func_idx].ModuleName);
-            console.writestring(':');
-            console.writestring(Context^.ResolvedImports.Imports[func_idx].FieldName);
-            console.writestringln('"');
+            wasm.vm.io.writestring('[wasm.vm] Trap: call_indirect to unresolved import "');
+            wasm.vm.io.writestring(Context^.ResolvedImports.Imports[func_idx].ModuleName);
+            wasm.vm.io.writestring(':');
+            wasm.vm.io.writestring(Context^.ResolvedImports.Imports[func_idx].FieldName);
+            wasm.vm.io.writestringln('"');
             Context^.ExecutionState.Running := false;
         end;
         exit;
@@ -115,7 +115,7 @@ begin
 
     { Validate function index }
     if local_idx >= Context^.Sections.FunctionSection^.FunctionCount then begin
-        console.writestringln('[wasm.vm.opcodes] Trap: call_indirect - function index out of range');
+        wasm.vm.io.writestringln('[wasm.vm.opcodes] Trap: call_indirect - function index out of range');
         Context^.ExecutionState.Running := false;
         exit;
     end;
@@ -126,7 +126,7 @@ begin
     actual_type := @Context^.Sections.TypeSection^.Types[actual_type_idx];
 
     if (expected_type_idx <> actual_type_idx) and (not types_match(expected_type, actual_type)) then begin
-        console.writestringln('[wasm.vm.opcodes] Trap: call_indirect - type mismatch');
+        wasm.vm.io.writestringln('[wasm.vm.opcodes] Trap: call_indirect - type mismatch');
         Context^.ExecutionState.Running := false;
         exit;
     end;

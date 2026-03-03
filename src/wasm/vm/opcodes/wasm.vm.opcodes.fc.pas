@@ -11,7 +11,7 @@ procedure _WASM_opcode_FCPrefix(Context : PWASMProcessContext);
 implementation
 
 uses
-    console, wasm.types.leb128, lmemorymanager,
+    wasm.vm.io, wasm.types.leb128, lmemorymanager,
     { Saturating truncation }
     wasm.vm.opcode.i32truncsatf32s, wasm.vm.opcode.i32truncsatf32u,
     wasm.vm.opcode.i32truncsatf64s, wasm.vm.opcode.i32truncsatf64u,
@@ -30,7 +30,7 @@ var
 
 procedure _WASM_opcode_FC_unimplemented(Context : PWASMProcessContext);
 begin
-    console.writestringln('[wasm.vm] Unimplemented 0xFC sub-opcode');
+    wasm.vm.io.writestringln('[wasm.vm] Unimplemented 0xFC sub-opcode');
     Context^.ExecutionState.Running := false;
 end;
 
@@ -38,7 +38,7 @@ procedure init();
 var i : TWASMUInt32;
 begin
     {$IFDEF DEBUG_OUTPUT}
-    console.writestringln('[wasm.vm.opcodes.fc] Init FC Jump Table.');
+    wasm.vm.io.writestringln('[wasm.vm.opcodes.fc] Init FC Jump Table.');
     {$ENDIF}
     FCJumpTable := PWASMFCOpcodeJumpTable(kalloc(sizeof(TWASMFCOpcodeJumpTable)));
 
@@ -86,7 +86,7 @@ begin
     Inc(Context^.ExecutionState.IP, bytesRead);
 
     if sub_opcode > 255 then begin
-        console.writestringln('[wasm.vm] 0xFC sub-opcode out of range');
+        wasm.vm.io.writestringln('[wasm.vm] 0xFC sub-opcode out of range');
         Context^.ExecutionState.Running := false;
         exit;
     end;

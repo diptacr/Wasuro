@@ -36,7 +36,7 @@ type
     sInt8 = shortint;
     sInt16 = smallint;
     sInt32 = integer;
-    sInt64 = longint;
+    sInt64 = int64;
 
     Float = Single;
  

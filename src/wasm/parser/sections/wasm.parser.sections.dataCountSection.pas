@@ -9,7 +9,7 @@ procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMPro
 
 implementation
 
-uses console, wasm.types.leb128, lmemorymanager, wasm.types.sections;
+uses wasm.vm.io, wasm.types.leb128, lmemorymanager, wasm.types.sections;
 
 { DataCount section (ID 12): contains a single u32 count of data segments.
   Pre-allocates the DataSegments array so that bulk memory opcodes
@@ -21,8 +21,8 @@ var
     dataCount : TWASMUInt32;
 begin
     {$IFDEF DEBUG_OUTPUT}
-     console.writestring('[wasm.parser] Handle Section: DataCount - Size: ');
-     console.writeintlnWND(section_length, 0);
+     wasm.vm.io.writestring('[wasm.parser] Handle Section: DataCount - Size: ');
+     wasm.vm.io.writeintlnWND(section_length, 0);
     {$ENDIF}
 
     pos := buffer;

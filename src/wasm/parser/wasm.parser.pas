@@ -3,7 +3,7 @@ unit wasm.parser;
 interface
 
 uses
-    wasm.types.builtin, lmemorymanager, console, wasm.types.leb128,
+    wasm.types.builtin, lmemorymanager, wasm.vm.io, wasm.types.leb128,
     wasm.types.enums, wasm.types.sections, wasm.types.context, wasm.types.heap, wasm.types.stack,
     wasm.parser.sections, wasm.types.constants;
 
@@ -104,13 +104,13 @@ begin
     pos:= buffer;
 
     {$IFDEF DEBUG_OUTPUT}
-     console.writestringln('[wasm.parser] Starting parse of WASM binary.');
+     wasm.vm.io.writestringln('[wasm.parser] Starting parse of WASM binary.');
     {$ENDIF}
 
     // Check for the WASM Magic
     if(TWASMPUInt32(pos)^ = wasm.types.constants.WASM_HDR_MAGIC) then begin   
         {$IFDEF DEBUG_OUTPUT}
-         console.writestringln('[wasm.parser] Binary is valid.');
+         wasm.vm.io.writestringln('[wasm.parser] Binary is valid.');
         {$ENDIF}
 
         // Set binary to valid
@@ -121,8 +121,8 @@ begin
         ctx^.Version:= TWASMPUInt32(pos)^;
         inc(pos, 4);
         {$IFDEF DEBUG_OUTPUT}
-         console.writestring('[wasm.parser] Version: ');
-         console.writeintlnWND(ctx^.Version, 0);
+         wasm.vm.io.writestring('[wasm.parser] Version: ');
+         wasm.vm.io.writeintlnWND(ctx^.Version, 0);
         {$ENDIF}
 
         // Read the sections

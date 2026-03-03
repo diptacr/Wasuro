@@ -23,7 +23,7 @@ function count_func_imports(ctx : PWASMProcessContext) : TWASMUInt32;
 implementation
 
 uses
-    lmemorymanager, console,
+    lmemorymanager, wasm.vm.io,
     wasm.types.enums, wasm.types.values, wasm.types.sections,
     wasm.types.stack, wasm.types.constants, wasm.vm.control;
 
@@ -80,14 +80,14 @@ begin
 
         { Validate: _start must not be an imported function }
         if func_idx < import_count then begin
-            console.writestringln('[wasm.vm.setup] Error: _start points to an imported function');
+            wasm.vm.io.writestringln('[wasm.vm.setup] Error: _start points to an imported function');
             exit;
         end;
 
         local_idx := func_idx - import_count;
 
         if local_idx >= ctx^.Sections.CodeSection^.CodeCount then begin
-            console.writestringln('[wasm.vm.setup] Error: _start function index out of range');
+            wasm.vm.io.writestringln('[wasm.vm.setup] Error: _start function index out of range');
             exit;
         end;
 
@@ -128,8 +128,8 @@ begin
         ctx^.ExecutionState.Running := true;
 
         {$IFDEF DEBUG_OUTPUT}
-        console.writestring('[wasm.vm.setup] _start found at function index ');
-        console.writeintlnWND(func_idx, 0);
+        wasm.vm.io.writestring('[wasm.vm.setup] _start found at function index ');
+        wasm.vm.io.writeintlnWND(func_idx, 0);
         {$ENDIF}
 
         find_start := true;

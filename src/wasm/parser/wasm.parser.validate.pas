@@ -11,7 +11,7 @@ function validate_module(ctx : PWASMProcessContext; var errorMsg : TWASMPChar) :
 
 implementation
 
-uses console;
+uses wasm.vm.io;
 
 function validate_module(ctx : PWASMProcessContext; var errorMsg : TWASMPChar) : TWASMBoolean;
 var i : TWASMUInt32;

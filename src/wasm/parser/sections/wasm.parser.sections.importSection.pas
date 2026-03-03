@@ -3,7 +3,7 @@ unit wasm.parser.sections.importSection;
 interface
 
 uses
-    wasm.types.builtin, lmemorymanager, console, wasm.types.leb128,
+    wasm.types.builtin, lmemorymanager, wasm.vm.io, wasm.types.leb128,
     wasm.types.enums, wasm.types.sections, wasm.types.context;
 
 procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
@@ -72,8 +72,8 @@ var
    limitsFlag : TWASMUInt8;
 begin
     {$IFDEF DEBUG_OUTPUT}
-     console.writestring('[wasm.parser] Handle Section: Import - Size: ');
-     console.writeintlnWND(section_length, 0);
+     wasm.vm.io.writestring('[wasm.parser] Handle Section: Import - Size: ');
+     wasm.vm.io.writeintlnWND(section_length, 0);
     {$ENDIF}
 
     pos := buffer;

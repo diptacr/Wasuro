@@ -3,7 +3,7 @@ unit wasm.parser.sections.tableSection;
 interface
 
 uses
-    wasm.types.builtin, lmemorymanager, console, wasm.types.leb128,
+    wasm.types.builtin, lmemorymanager, wasm.vm.io, wasm.types.leb128,
     wasm.types.sections, wasm.types.context;
 
 procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
@@ -20,8 +20,8 @@ var
     tables: PWASMTables;
 begin
     {$IFDEF DEBUG_OUTPUT}
-    console.writestring('[wasm.parser] Handle Section: Table - Size: ');
-    console.writeintlnWND(section_length, 0);
+    wasm.vm.io.writestring('[wasm.parser] Handle Section: Table - Size: ');
+    wasm.vm.io.writeintlnWND(section_length, 0);
     {$ENDIF}
 
     pos := buffer;
@@ -60,17 +60,17 @@ begin
         end;
 
         {$IFDEF DEBUG_OUTPUT}
-        console.writestring('[wasm.parser]     Table ');
-        console.writeintWND(i, 0);
-        console.writestring(' - ElemType: $');
-        console.writeintWND(elem_type, 0);
-        console.writestring(' Initial: ');
-        console.writeintWND(min_size, 0);
+        wasm.vm.io.writestring('[wasm.parser]     Table ');
+        wasm.vm.io.writeintWND(i, 0);
+        wasm.vm.io.writestring(' - ElemType: $');
+        wasm.vm.io.writeintWND(elem_type, 0);
+        wasm.vm.io.writestring(' Initial: ');
+        wasm.vm.io.writeintWND(min_size, 0);
         if limits_flag = 1 then begin
-            console.writestring(' Max: ');
-            console.writeintWND(max_size, 0);
+            wasm.vm.io.writestring(' Max: ');
+            wasm.vm.io.writeintWND(max_size, 0);
         end;
-        console.writestringln('');
+        wasm.vm.io.writestringln('');
         {$ENDIF}
 
         tables^.Tables[i].ElementType := elem_type;

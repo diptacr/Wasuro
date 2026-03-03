@@ -8,7 +8,7 @@ procedure _WASM_opcode_CallOp(Context : PWASMProcessContext);
 
 implementation
 
-uses wasm.types.leb128, lmemorymanager, console, wasm.types.builtin, wasm.types.enums,
+uses wasm.types.leb128, lmemorymanager, wasm.vm.io, wasm.types.builtin, wasm.types.enums,
      wasm.types.values, wasm.types.sections, wasm.types.stack,
      wasm.types.constants, wasm.vm.control;
 
@@ -46,11 +46,11 @@ begin
               IP already advanced past the call instruction. }
         end else begin
             { Trap: unresolved import }
-            console.writestring('[wasm.vm] Trap: call to unresolved import "');
-            console.writestring(Context^.ResolvedImports.Imports[func_idx].ModuleName);
-            console.writestring(':');
-            console.writestring(Context^.ResolvedImports.Imports[func_idx].FieldName);
-            console.writestringln('"');
+            wasm.vm.io.writestring('[wasm.vm] Trap: call to unresolved import "');
+            wasm.vm.io.writestring(Context^.ResolvedImports.Imports[func_idx].ModuleName);
+            wasm.vm.io.writestring(':');
+            wasm.vm.io.writestring(Context^.ResolvedImports.Imports[func_idx].FieldName);
+            wasm.vm.io.writestringln('"');
             Context^.ExecutionState.Running := false;
         end;
         exit;

@@ -8,11 +8,11 @@ procedure _WASM_opcode_UnreachableOp(Context : PWASMProcessContext);
 
 implementation
 
-uses console;
+uses wasm.vm.io;
 
 procedure _WASM_opcode_UnreachableOp(Context : PWASMProcessContext);
 begin
-     console.writestringln('[wasm.vm.opcodes] Trap: unreachable executed!');
+     wasm.vm.io.writestringln('[wasm.vm.opcodes] Trap: unreachable executed!');
      Context^.ExecutionState.Running := false;
 end;
 
