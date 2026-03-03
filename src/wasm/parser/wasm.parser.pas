@@ -142,7 +142,7 @@ begin
             Inc(pos, section_length);
         end;
     end else begin
-        writeln('[wasm.parser] Binary missing WASM Magic!');
+        wasm.vm.io.writestringln('[wasm.parser] Binary missing WASM Magic!');
         ctx^.ValidBinary:= false;
     end;
     parse:= ctx;
