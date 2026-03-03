@@ -8,7 +8,7 @@ procedure _WASM_opcode_I64Store32Op(Context : PWASMProcessContext);
 
 implementation
 
-uses console, wasm.types.leb128, wasm.types.builtin, wasm.types.heap, wasm.types.stack;
+uses wasm.vm.io, wasm.types.leb128, wasm.types.builtin, wasm.types.heap, wasm.types.stack;
 
 procedure _WASM_opcode_I64Store32Op(Context : PWASMProcessContext);
 var align_val, offset_val : TWASMUInt32; bytesRead : TWASMUInt8; addr : TWASMUInt32; val : TWASMInt64;
@@ -21,7 +21,7 @@ begin
      val := wasm.types.stack.popi64(Context^.ExecutionState.Operand_Stack);
      addr := TWASMUInt32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
      if not wasm.types.heap.write_uint32(addr, Context^.ExecutionState.Memory, TWASMUInt32(val)) then begin
-        console.writestringln('[wasm.vm.opcodes] Trap: i64.store32 out of bounds!');
+        wasm.vm.io.writestringln('[wasm.vm.opcodes] Trap: i64.store32 out of bounds!');
         Context^.ExecutionState.Running := false;
      end;
 end;

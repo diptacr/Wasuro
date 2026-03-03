@@ -8,7 +8,7 @@ procedure _WASM_opcode_LocalSetOp(Context : PWASMProcessContext);
 
 implementation
 
-uses console, wasm.types.leb128, wasm.types.builtin, wasm.types.enums, wasm.types.values, wasm.types.stack;
+uses wasm.vm.io, wasm.types.leb128, wasm.types.builtin, wasm.types.enums, wasm.types.values, wasm.types.stack;
 
 procedure _WASM_opcode_LocalSetOp(Context : PWASMProcessContext);
 var idx : TWASMUInt32; bytesRead : TWASMUInt8; entry : PWASMValueEntry;
@@ -23,7 +23,7 @@ begin
         vtf32: entry^.f32Value := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
         vtf64: entry^.f64Value := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
      else begin
-        console.writestringln('[wasm.vm.opcodes.localset] Unknown local type!');
+        wasm.vm.io.writestringln('[wasm.vm.opcodes.localset] Unknown local type!');
         Context^.ExecutionState.Running := false;
      end;
      end;

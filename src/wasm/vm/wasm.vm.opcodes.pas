@@ -3,7 +3,7 @@ unit wasm.vm.opcodes;
 interface
 
 uses
-    console, wasm.types.builtin, wasm.types.enums, wasm.types.context;
+    wasm.vm.io, wasm.types.builtin, wasm.types.enums, wasm.types.context;
 
 procedure initializeOpcodeJumpTable(Table : PWASMOpcodeJumpTable);
 
@@ -119,7 +119,7 @@ uses
 procedure initializeOpcodeJumpTable(Table: PWASMOpcodeJumpTable);
 begin
     {$IFDEF DEBUG_OUTPUT}
-    console.writestringln('[wasm.vm.opcodes] Init Opcode Jump Table.');
+    wasm.vm.io.writestringln('[wasm.vm.opcodes] Init Opcode Jump Table.');
     {$ENDIF}
     if (Table = nil) then exit;
     Table^[ord(TWasmOpcode.UnreachableOp)]  := @wasm.vm.opcode.unreachable._WASM_opcode_UnreachableOp;

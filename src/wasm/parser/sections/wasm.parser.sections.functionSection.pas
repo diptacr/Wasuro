@@ -3,7 +3,7 @@ unit wasm.parser.sections.functionSection;
 interface
 
 uses
-    wasm.types.builtin, lmemorymanager, console, wasm.types.leb128,
+    wasm.types.builtin, lmemorymanager, wasm.vm.io, wasm.types.leb128,
     wasm.types.sections, wasm.types.context;
 
 procedure handle(buffer: TWASMPUInt8; section_length: TWASMUInt32; ctx: PWASMProcessContext);
@@ -33,8 +33,8 @@ var
 
 begin
     {$IFDEF DEBUG_OUTPUT}
-     console.writestring('[wasm.parser] Handle Section: Function - Size: ');
-     console.writeintlnWND(section_length, 0);
+     wasm.vm.io.writestring('[wasm.parser] Handle Section: Function - Size: ');
+     wasm.vm.io.writeintlnWND(section_length, 0);
     {$ENDIF}
 
     // Initialize the read/end pointers

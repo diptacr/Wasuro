@@ -8,7 +8,7 @@ procedure _WASM_opcode_I32Load16SOp(Context : PWASMProcessContext);
 
 implementation
 
-uses console, wasm.types.leb128, wasm.types.builtin, wasm.types.heap, wasm.types.stack;
+uses wasm.vm.io, wasm.types.leb128, wasm.types.builtin, wasm.types.heap, wasm.types.stack;
 
 procedure _WASM_opcode_I32Load16SOp(Context : PWASMProcessContext);
 var align_val, offset_val : TWASMUInt32; bytesRead : TWASMUInt8; addr : TWASMUInt32; result_val : TWASMUInt16;
@@ -20,7 +20,7 @@ begin
      Inc(Context^.ExecutionState.IP, bytesRead);
      addr := TWASMUInt32(wasm.types.stack.popi32(Context^.ExecutionState.Operand_Stack)) + offset_val;
      if not wasm.types.heap.read_uint16(addr, Context^.ExecutionState.Memory, @result_val) then begin
-        console.writestringln('[wasm.vm.opcodes] Trap: i32.load16_s out of bounds!');
+        wasm.vm.io.writestringln('[wasm.vm.opcodes] Trap: i32.load16_s out of bounds!');
         Context^.ExecutionState.Running := false;
      end else
         wasm.types.stack.pushi32(Context^.ExecutionState.Operand_Stack, TWASMInt32(TWASMSInt16(result_val)));

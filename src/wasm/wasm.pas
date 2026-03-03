@@ -89,13 +89,13 @@ function wasm_tick(ctx : PWASMProcessContext) : TWASMBoolean;
 { ---- Diagnostics ----------------------------------------------------- }
 
 { Dump the current VM state (IP, running, exit code, stacks) to
-  the console. Useful for post-execution diagnostics. }
+  the output. Useful for post-execution diagnostics. }
 procedure wasm_dump_state(ctx : PWASMProcessContext);
 
 implementation
 
 uses
-    console,
+    wasm.vm.io,
     wasm.types.stack,
     wasm.parser,
     wasm.vm,
@@ -247,36 +247,36 @@ end;
 
 procedure wasm_dump_state(ctx : PWASMProcessContext);
 begin
-    console.writestringln('');
-    console.writestringln('Execution finished.');
-    console.writestringln('');
-    console.writestringln('--- VM State ---');
-    console.writestring('IP:      ');
-    console.writeintlnWND(ctx^.ExecutionState.IP, 0);
-    console.writestring('Running: ');
+    wasm.vm.io.writestringln('');
+    wasm.vm.io.writestringln('Execution finished.');
+    wasm.vm.io.writestringln('');
+    wasm.vm.io.writestringln('--- VM State ---');
+    wasm.vm.io.writestring('IP:      ');
+    wasm.vm.io.writeintlnWND(ctx^.ExecutionState.IP, 0);
+    wasm.vm.io.writestring('Running: ');
     if ctx^.ExecutionState.Running then
-        console.writestringln('true')
+        wasm.vm.io.writestringln('true')
     else
-        console.writestringln('false');
-    console.writestring('ExitCode:');
-    console.writeintlnWND(ctx^.ExitCode, 0);
-    console.writestringln('');
-    console.writestring('Operand Stack (');
-    console.writeintWND(ctx^.ExecutionState.Operand_Stack^.Top, 0);
-    console.writestringln(' entries):');
+        wasm.vm.io.writestringln('false');
+    wasm.vm.io.writestring('ExitCode:');
+    wasm.vm.io.writeintlnWND(ctx^.ExitCode, 0);
+    wasm.vm.io.writestringln('');
+    wasm.vm.io.writestring('Operand Stack (');
+    wasm.vm.io.writeintWND(ctx^.ExecutionState.Operand_Stack^.Top, 0);
+    wasm.vm.io.writestringln(' entries):');
     if ctx^.ExecutionState.Operand_Stack^.Top > 0 then
         wasm.types.stack.walk(ctx^.ExecutionState.Operand_Stack)
     else
-        console.writestringln('  (empty)');
-    console.writestringln('');
-    console.writestring('Control Stack (');
-    console.writeintWND(ctx^.ExecutionState.Control_Stack^.Top, 0);
-    console.writestringln(' entries):');
+        wasm.vm.io.writestringln('  (empty)');
+    wasm.vm.io.writestringln('');
+    wasm.vm.io.writestring('Control Stack (');
+    wasm.vm.io.writeintWND(ctx^.ExecutionState.Control_Stack^.Top, 0);
+    wasm.vm.io.writestringln(' entries):');
     if ctx^.ExecutionState.Control_Stack^.Top > 0 then
         wasm.types.stack.walk(ctx^.ExecutionState.Control_Stack)
     else
-        console.writestringln('  (empty)');
-    console.writestringln('----------------');
+        wasm.vm.io.writestringln('  (empty)');
+    wasm.vm.io.writestringln('----------------');
 end;
 
 end.

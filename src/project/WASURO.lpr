@@ -2,7 +2,7 @@ program WASURO;
 
 uses
     sysutils,
-    console,
+    wasm.vm.io,
     wasm.types.builtin,
     wasm.types.context,
     wasm,
@@ -16,6 +16,12 @@ uses
     {$ENDIF}
     ;
 
+{ Emu-layer writechar hook — forwards to RTL Write for host OS output }
+procedure emu_writechar(ch : TWASMChar);
+begin
+    Write(ch);
+end;
+
 var
    Context : PWASMProcessContext;
    ModuleSize     : Int64;
@@ -23,19 +29,22 @@ var
    ModuleFile     : File;
 
 begin
+    { Wire up the IO subsystem before anything else }
+    wasm.vm.io.io_set_writechar(@emu_writechar);
+
     {$IFDEF RUN_TESTS}
     wasm.wasm_init;
     wasm.test.run_all_tests;
     halt(wasm.test.framework.FailedTests);
     {$ELSE}
     {$IFDEF DEBUG_OUTPUT}
-    console.writestringln('WASURO - WebAssembly Runtime in Object Pascal');
+    wasm.vm.io.writestringln('WASURO - WebAssembly Runtime in Object Pascal');
     {$ENDIF}
     wasm.wasm_init;
 
     if ParamCount > 0 then begin
         if not FileExists(ParamStr(1)) then begin
-            console.writestringln('File not found.');
+            wasm.vm.io.writestringln('File not found.');
             halt(1);
         end;
         Assign(ModuleFile, ParamStr(1));
@@ -53,7 +62,7 @@ begin
         Context := wasm.wasm_load(ModuleBuffer, TWASMPUInt8(ModuleBuffer + ModuleSize));
 
         if not Context^.ValidBinary then begin
-            console.writestringln('Error: Invalid WASM binary.');
+            wasm.vm.io.writestringln('Error: Invalid WASM binary.');
             halt(1);
         end;
 
@@ -63,7 +72,7 @@ begin
 
         { Find _start and run to completion }
         if not wasm.wasm_start(Context) then begin
-            console.writestringln('No _start export found.');
+            wasm.vm.io.writestringln('No _start export found.');
             halt(1);
         end;
 
@@ -74,7 +83,7 @@ begin
         FreeMem(ModuleBuffer);
         halt(Context^.ExitCode);
     end else begin
-        console.writestringln('Usage: WASURO <module.wasm>');
+        wasm.vm.io.writestringln('Usage: WASURO <module.wasm>');
         halt(1);
     end;
     {$ENDIF}

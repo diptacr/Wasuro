@@ -15,8 +15,8 @@ type
     { Signed integers }
     TWASMSInt8  = sint8;
     TWASMSInt16 = sint16;
-    TWASMInt32  = int32;
-    TWASMInt64  = int64;
+    TWASMInt32  = sint32;
+    TWASMInt64  = sint64;
 
     { Floating point }
     TWASMFloat  = float;

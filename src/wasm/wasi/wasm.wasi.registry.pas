@@ -26,7 +26,7 @@ function  count_func_imports(ctx : PWASMProcessContext) : TWASMUInt32;
 implementation
 
 uses
-    lmemorymanager, console,
+    lmemorymanager, wasm.vm.io,
     wasm.types.sections;
 
 { Compare two null-terminated strings. Returns true if equal. }
@@ -160,19 +160,19 @@ begin
                 ctx^.ResolvedImports.Imports[func_idx].Callback :=
                     ctx^.HostFuncRegistry.Entries[reg_idx].Callback;
                 {$IFDEF DEBUG_OUTPUT}
-                console.writestring('[wasm.wasi.registry] Resolved import: ');
-                console.writestring(ctx^.Sections.ImportSection^.Entries[i].ModuleName);
-                console.writestring(':');
-                console.writestringln(ctx^.Sections.ImportSection^.Entries[i].FieldName);
+                wasm.vm.io.writestring('[wasm.wasi.registry] Resolved import: ');
+                wasm.vm.io.writestring(ctx^.Sections.ImportSection^.Entries[i].ModuleName);
+                wasm.vm.io.writestring(':');
+                wasm.vm.io.writestringln(ctx^.Sections.ImportSection^.Entries[i].FieldName);
                 {$ENDIF}
             end else begin
                 ctx^.ResolvedImports.Imports[func_idx].IsResolved := false;
                 ctx^.ResolvedImports.Imports[func_idx].Callback := nil;
                 {$IFDEF DEBUG_OUTPUT}
-                console.writestring('[wasm.wasi.registry] Unresolved import: ');
-                console.writestring(ctx^.Sections.ImportSection^.Entries[i].ModuleName);
-                console.writestring(':');
-                console.writestringln(ctx^.Sections.ImportSection^.Entries[i].FieldName);
+                wasm.vm.io.writestring('[wasm.wasi.registry] Unresolved import: ');
+                wasm.vm.io.writestring(ctx^.Sections.ImportSection^.Entries[i].ModuleName);
+                wasm.vm.io.writestring(':');
+                wasm.vm.io.writestringln(ctx^.Sections.ImportSection^.Entries[i].FieldName);
                 {$ENDIF}
             end;
 

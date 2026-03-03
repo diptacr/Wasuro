@@ -8,7 +8,7 @@ procedure _WASM_opcode_GlobalSetOp(Context : PWASMProcessContext);
 
 implementation
 
-uses console, wasm.types.leb128, wasm.types.builtin, wasm.types.enums, wasm.types.values, wasm.types.sections, wasm.types.stack;
+uses wasm.vm.io, wasm.types.leb128, wasm.types.builtin, wasm.types.enums, wasm.types.values, wasm.types.sections, wasm.types.stack;
 
 procedure _WASM_opcode_GlobalSetOp(Context : PWASMProcessContext);
 var idx : TWASMUInt32; bytesRead : TWASMUInt8; entry : PWASMGlobalEntry;
@@ -18,7 +18,7 @@ begin
      Inc(Context^.ExecutionState.IP, bytesRead);
      entry := @Context^.ExecutionState.Globals^.Globals[idx];
      if not entry^.Mutable then begin
-        console.writestringln('[wasm.vm.opcodes.globalset] Trap: attempt to set immutable global!');
+        wasm.vm.io.writestringln('[wasm.vm.opcodes.globalset] Trap: attempt to set immutable global!');
         Context^.ExecutionState.Running := false;
      end else begin
         case entry^.ValueType of
@@ -27,7 +27,7 @@ begin
            vtf32: entry^.Value.f32Value := wasm.types.stack.popf32(Context^.ExecutionState.Operand_Stack);
            vtf64: entry^.Value.f64Value := wasm.types.stack.popf64(Context^.ExecutionState.Operand_Stack);
         else begin
-           console.writestringln('[wasm.vm.opcodes.globalset] Unknown global type!');
+           wasm.vm.io.writestringln('[wasm.vm.opcodes.globalset] Unknown global type!');
            Context^.ExecutionState.Running := false;
         end;
         end;

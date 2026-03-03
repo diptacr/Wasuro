@@ -8,7 +8,7 @@ procedure _WASM_opcode_GlobalGetOp(Context : PWASMProcessContext);
 
 implementation
 
-uses console, wasm.types.leb128, wasm.types.builtin, wasm.types.enums, wasm.types.values, wasm.types.sections, wasm.types.stack;
+uses wasm.vm.io, wasm.types.leb128, wasm.types.builtin, wasm.types.enums, wasm.types.values, wasm.types.sections, wasm.types.stack;
 
 procedure _WASM_opcode_GlobalGetOp(Context : PWASMProcessContext);
 var idx : TWASMUInt32; bytesRead : TWASMUInt8; entry : PWASMGlobalEntry;
@@ -23,7 +23,7 @@ begin
         vtf32: wasm.types.stack.pushf32(Context^.ExecutionState.Operand_Stack, entry^.Value.f32Value);
         vtf64: wasm.types.stack.pushf64(Context^.ExecutionState.Operand_Stack, entry^.Value.f64Value);
      else begin
-        console.writestringln('[wasm.vm.opcodes.globalget] Unknown global type!');
+        wasm.vm.io.writestringln('[wasm.vm.opcodes.globalget] Unknown global type!');
         Context^.ExecutionState.Running := false;
      end;
      end;

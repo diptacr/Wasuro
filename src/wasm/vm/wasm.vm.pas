@@ -3,7 +3,7 @@ unit wasm.vm;
 interface
 
 uses
-    wasm.types.builtin, lmemorymanager, console,
+    wasm.types.builtin, lmemorymanager, wasm.vm.io,
 
     wasm.types.context,
     wasm.vm.opcodes, wasm.vm.opcodes.fc;
@@ -18,13 +18,13 @@ var
 
 procedure _WASM_opcode_unimplemented(Context : PWASMProcessContext);
 begin
-     console.writestringln('[wasm.vm] Unimplemented opcode used');
+     wasm.vm.io.writestringln('[wasm.vm] Unimplemented opcode used');
 end;
 
 procedure init();
 begin
      {$IFDEF DEBUG_OUTPUT}
-     console.writestringln('[wasm.vm] Init');
+     wasm.vm.io.writestringln('[wasm.vm] Init');
      {$ENDIF}
      OpcodeJumpTable := PWASMOpcodeJumpTable(kalloc(sizeof(TWASMOpcodeJumpTable)));
      initializeOpcodeJumpTable(@OpcodeJumpTable^[0]);

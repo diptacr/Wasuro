@@ -3,7 +3,7 @@ unit wasm.test.framework;
 interface
 
 uses
-    wasm.types.builtin, lmemorymanager, console,
+    wasm.types.builtin, lmemorymanager, wasm.vm.io,
     wasm.types.enums, wasm.types.values, wasm.types.sections, wasm.types.context, wasm.types.heap, wasm.types.stack;
 
 var

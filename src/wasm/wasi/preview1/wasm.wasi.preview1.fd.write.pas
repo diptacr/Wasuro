@@ -11,7 +11,7 @@ implementation
 
 uses
     wasm.types.builtin, wasm.types.values, wasm.types.stack, wasm.types.heap,
-    wasm.types.wasi, console;
+    wasm.types.wasi, wasm.vm.io;
 
 { fd_write(fd: i32, iovs: i32, iovs_len: i32, nwritten: i32) -> errno: i32
   Stack: [fd, iovs_ptr, iovs_len, nwritten_ptr]

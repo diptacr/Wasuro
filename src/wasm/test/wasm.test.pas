@@ -7,8 +7,9 @@ procedure run_all_tests;
 implementation
 
 uses
-    console, wasm.test.framework,
+    wasm.vm.io, wasm.test.framework,
     { Infra tests }
+    wasm.test.io,
     wasm.test.stack,
     wasm.test.heap,
     wasm.test.leb128,
@@ -279,6 +280,7 @@ begin
     reset_test_state;
 
     { Infra }
+    wasm.test.io.run;
     wasm.test.stack.run;
     wasm.test.heap.run;
     wasm.test.leb128.run;

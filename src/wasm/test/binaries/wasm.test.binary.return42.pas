@@ -35,7 +35,7 @@ procedure run;
 implementation
 
 uses
-    console, wasm.types.context, wasm.types.stack,
+    wasm.vm.io, wasm.types.context, wasm.types.stack,
     wasm.parser, wasm.vm, wasm.test.framework;
 
 procedure run;

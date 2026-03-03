@@ -8,7 +8,7 @@ procedure _WASM_opcode_MemoryInitOp(Context : PWASMProcessContext);
 
 implementation
 
-uses wasm.types.builtin, wasm.types.stack, wasm.types.heap, wasm.types.leb128, console;
+uses wasm.types.builtin, wasm.types.stack, wasm.types.heap, wasm.types.leb128, wasm.vm.io;
 
 { memory.init x: [d, s, n] -> []
   Copy n bytes from passive data segment x, starting at offset s,
