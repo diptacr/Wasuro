@@ -168,25 +168,25 @@ begin
     for i:=stack^.Top-1 downto 0 do begin
         case stack^.Entries[i].ValueType of
             vti32:begin
-                writeln('[wasm.types.stack][-',stack^.Top-i,'] i32: ', stack^.Entries[i].i32Value);
+                wasm.vm.io.writestringln('[wasm.types.stack][-',stack^.Top-i,'] i32: ', stack^.Entries[i].i32Value);
             end;
             vti64:begin
-                writeln('[wasm.types.stack][-',stack^.Top-i,'] i64: ', stack^.Entries[i].i64Value);
+                wasm.vm.io.writestringln('[wasm.types.stack][-',stack^.Top-i,'] i64: ', stack^.Entries[i].i64Value);
             end;
             vtf32:begin
-                writeln('[wasm.types.stack][-',stack^.Top-i,'] f32: ', stack^.Entries[i].f32Value);
+                wasm.vm.io.writestringln('[wasm.types.stack][-',stack^.Top-i,'] f32: ', stack^.Entries[i].f32Value);
             end;
             vtf64:begin
-                writeln('[wasm.types.stack][-',stack^.Top-i,'] f64: ', stack^.Entries[i].f64Value);
+                wasm.vm.io.writestringln('[wasm.types.stack][-',stack^.Top-i,'] f64: ', stack^.Entries[i].f64Value);
             end;
             vtv128:begin
-                writeln('[wasm.types.stack][-',stack^.Top-i,'] v128: ', stack^.Entries[i].v128Value.low, ' ', stack^.Entries[i].v128Value.high);
+                wasm.vm.io.writestringln('[wasm.types.stack][-',stack^.Top-i,'] v128: ', stack^.Entries[i].v128Value.low, ' ', stack^.Entries[i].v128Value.high);
             end;
             vtfunc:begin
-                writeln('[wasm.types.stack][-',stack^.Top-i,'] func: ', stack^.Entries[i].funcValue);
+                wasm.vm.io.writestringln('[wasm.types.stack][-',stack^.Top-i,'] func: ', stack^.Entries[i].funcValue);
             end;
             vtextn:begin
-                writeln('[wasm.types.stack][-',stack^.Top-i,'] extn: ', stack^.Entries[i].extnValue);
+                wasm.vm.io.writestringln('[wasm.types.stack][-',stack^.Top-i,'] extn: ', stack^.Entries[i].extnValue);
             end;
         end;
     end;
